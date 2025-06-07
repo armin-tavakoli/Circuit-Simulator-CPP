@@ -9,7 +9,7 @@
 void Simulator::run() {
     string command;
     cout << "Welcome to the Circuit Simulator!" << endl;
-    cout << "Enter commands ('netlist path/to/file.txt', 'print TRAN...', 'exit')." << endl;
+    cout << "Enter commands ('netlist ...', 'gnd <node>', 'exit')." << endl;
 
     while (true) {
         cout << "> ";
@@ -50,11 +50,12 @@ void Simulator::processCommand(const string& command) {
     else if (cmd == "netlist") handleNetlist(tokens);
     else if (cmd == "rename") handleRenameNode(tokens);
     else if (cmd == "print") handlePrint(tokens);
+    else if (cmd == "gnd") handleGnd(tokens);
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
 /**
- * @brief تابع کمکی برای افزودن یک المان با ساختار منطقی جدید و ایمن.
+ * @brief تابع کمکی برای افزودن یک المان از روی آرگومان‌های تجزیه شده.
  */
 void Simulator::addComponentFromTokens(const vector<string>& args) {
     if (args.empty()) return;
@@ -66,7 +67,6 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
 
     char compType = toupper(name[0]);
 
-    // پردازش بر اساس نوع المان
     switch (compType) {
         case 'R':
         case 'C':
@@ -86,25 +86,17 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             int n1 = stoi(args[1]);
             int n2 = stoi(args[2]);
 
-            // --- منطق اصلاح شده و صحیح برای منبع سینوسی ---
-            // فرمت: V... n1 n2 SIN ( Voff Vamp Freq )
             if (args.size() >= 5 && args[3] == "SIN") {
-                // پیدا کردن موقعیت پرانتزها
                 auto it_open = find(args.begin(), args.end(), "(");
                 auto it_close = find(args.begin(), args.end(), ")");
-
-                // فاصله بین پرانتزها باید دقیقا ۳ پارامتر باشد
                 if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 4) {
                     throw runtime_error("Syntax error for SIN source. Expected format: SIN ( Voff Vamp Freq )");
                 }
-
                 double v_off = parseValue(*(it_open + 1));
                 double v_amp = parseValue(*(it_open + 2));
                 double freq = parseValue(*(it_open + 3));
-
                 circuit.addComponent(make_unique<SinusoidalVoltageSource>(name, n1, n2, v_off, v_amp, freq));
             }
-                // بررسی برای منبع DC
             else if (args.size() == 4) {
                 double value = parseValue(args[3]);
                 circuit.addComponent(make_unique<VoltageSource>(name, n1, n2, value));
@@ -130,6 +122,9 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
     }
 }
 
+/**
+ * @brief دستور 'add' را از خط فرمان پردازش می‌کند.
+ */
 void Simulator::handleAdd(const vector<string>& tokens) {
     if (tokens.size() < 2) throw runtime_error("'add' requires arguments.");
     vector<string> args(tokens.begin() + 1, tokens.end());
@@ -137,6 +132,9 @@ void Simulator::handleAdd(const vector<string>& tokens) {
     cout << "Added component " << args[0] << endl;
 }
 
+/**
+ * @brief دستور 'netlist' را برای خواندن مدار از فایل پردازش می‌کند.
+ */
 void Simulator::handleNetlist(const vector<string>& tokens) {
     if (tokens.size() != 2) throw runtime_error("Usage: netlist <filepath>");
     string filepath = tokens[1];
@@ -167,6 +165,9 @@ void Simulator::handleNetlist(const vector<string>& tokens) {
     cout << "Netlist loading finished." << endl;
 }
 
+/**
+ * @brief دستور 'delete' را پردازش می‌کند.
+ */
 void Simulator::handleDelete(const vector<string>& tokens) {
     if (tokens.size() != 2) throw runtime_error("Usage: delete <CompName>");
     string name = tokens[1];
@@ -174,19 +175,18 @@ void Simulator::handleDelete(const vector<string>& tokens) {
     cout << "Deleted component " << name << endl;
 }
 
-void Simulator::handleRun(const vector<string>& tokens) {
-    if (tokens.size() != 3) throw runtime_error("Usage: run <EndTime> <TimeStep>");
-    double endTime = parseValue(tokens[1]);
-    double timeStep = parseValue(tokens[2]);
-    circuit.runTransientAnalysis(endTime, timeStep, {});
-}
-
+/**
+ * @brief دستور 'list' را برای نمایش المان‌ها پردازش می‌کند.
+ */
 void Simulator::handleList(const vector<string>& tokens) {
     if (tokens.size() > 2) throw runtime_error("Usage: list [type]");
     if (tokens.size() == 2) circuit.printCircuit(tokens[1][0]);
     else circuit.printCircuit('A');
 }
 
+/**
+ * @brief دستور 'nodes' را برای نمایش گره‌های موجود پردازش می‌کند.
+ */
 void Simulator::handleNodes() {
     set<int> nodes = circuit.getNodes();
     if (nodes.empty()) {
@@ -198,10 +198,16 @@ void Simulator::handleNodes() {
     cout << endl;
 }
 
+/**
+ * @brief دستور 'reset' را برای پاک کردن مدار پردازش می‌کند.
+ */
 void Simulator::handleReset() {
     circuit.clear();
 }
 
+/**
+ * @brief دستور 'rename' را برای تغییر نام گره پردازش می‌کند.
+ */
 void Simulator::handleRenameNode(const vector<string>& tokens) {
     if (tokens.size() != 4 || tokens[1] != "node") {
         throw runtime_error("Syntax error. Usage: rename node <old_name> <new_name>");
@@ -219,6 +225,19 @@ void Simulator::handleRenameNode(const vector<string>& tokens) {
     cout << "SUCCESS: Node renamed from <" << oldNode << "> to <" << newNode << ">" << endl;
 }
 
+/**
+ * @brief دستور 'run' را برای شروع تحلیل گذرا پردازش می‌کند.
+ */
+void Simulator::handleRun(const vector<string>& tokens) {
+    if (tokens.size() != 3) throw runtime_error("Usage: run <EndTime> <TimeStep>");
+    double endTime = parseValue(tokens[1]);
+    double timeStep = parseValue(tokens[2]);
+    circuit.runTransientAnalysis(endTime, timeStep, {});
+}
+
+/**
+ * @brief دستور 'print' را برای تحلیل و چاپ متغیرهای خاص پردازش می‌کند.
+ */
 void Simulator::handlePrint(const vector<string>& tokens) {
     if (tokens.size() < 4 || tokens[1] != "TRAN") {
         throw runtime_error("Syntax error. Usage: print TRAN <Tstep> <Tstop> <Var1> <Var2> ...");
@@ -241,4 +260,35 @@ void Simulator::handlePrint(const vector<string>& tokens) {
         cout << "Warning: No valid variables found to print." << endl;
     }
     circuit.runTransientAnalysis(tStop, tStep, printVars);
+}
+
+/**
+ * @brief دستور 'gnd' را برای اتصال یک گره به زمین پردازش می‌کند.
+ */
+void Simulator::handleGnd(const vector<string>& tokens) {
+    if (tokens.size() != 2) {
+        throw runtime_error("Syntax error. Usage: gnd <node_number>");
+    }
+
+    int oldNode;
+    try {
+        oldNode = stoi(tokens[1]);
+    } catch (const invalid_argument& e) {
+        throw runtime_error("Invalid node number: " + tokens[1]);
+    }
+
+    if (oldNode == 0) {
+        cout << "Node " << oldNode << " is already the ground node." << endl;
+        return;
+    }
+
+    int newNode = 0;
+
+    set<int> existingNodes = circuit.getNodes();
+    if (existingNodes.find(oldNode) == existingNodes.end()) {
+        throw runtime_error("Node <" + to_string(oldNode) + "> does not exist in the circuit");
+    }
+
+    circuit.renameNode(oldNode, newNode);
+    cout << "SUCCESS: Node " << oldNode << " is now connected to ground (renamed to 0)." << endl;
 }

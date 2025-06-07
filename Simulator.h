@@ -20,6 +20,7 @@ public:
 private:
     void processCommand(const string& command);
 
+    // توابع پردازش دستورات
     void handleAdd(const vector<string>& tokens);
     void handleDelete(const vector<string>& tokens);
     void handleRun(const vector<string>& tokens);
@@ -29,6 +30,7 @@ private:
     void handleReset();
     void handleRenameNode(const vector<string>& tokens);
     void handlePrint(const vector<string>& tokens);
+    void handleGnd(const vector<string>& tokens); // --- متد جدید ---
 
     void addComponentFromTokens(const vector<string>& args);
     Circuit circuit;
