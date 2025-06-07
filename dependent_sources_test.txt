@@ -1,0 +1,14 @@
+V_in1 1 0 2
+E_vcvs 2 0 1 0 3
+R_load1 2 0 1k
+
+V_ctrl_vccs 10 0 5
+G_vccs 11 0 10 0 0.002
+R_load2 11 0 1k
+
+Vsense 20 0 10
+R_sense 20 0 2k
+H_ccvs 21 0 Vsense 500
+
+F_cccs 31 0 Vsense 4
+R_load4 31 0 1k

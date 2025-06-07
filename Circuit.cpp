@@ -58,8 +58,22 @@ set<int> Circuit::getNodes() const {
     for (const auto& comp : components) {
         nodes.insert(comp->getNode1());
         nodes.insert(comp->getNode2());
+        if(auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
+            nodes.insert(vcvs->getCtrlNode1());
+            nodes.insert(vcvs->getCtrlNode2());
+        }
+        if(auto vccs = dynamic_cast<const VCCS*>(comp.get())) {
+            nodes.insert(vccs->getCtrlNode1());
+            nodes.insert(vccs->getCtrlNode2());
+        }
     }
     return nodes;
+}
+
+void Circuit::renameNode(int oldNode, int newNode) {
+    for (auto& comp : components) {
+        comp->updateNode(oldNode, newNode);
+    }
 }
 
 void Circuit::analyzeCircuit() {
@@ -69,21 +83,33 @@ void Circuit::analyzeCircuit() {
     for (const auto& comp : components) {
         nodes.insert(comp->getNode1());
         nodes.insert(comp->getNode2());
+        if(auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
+            nodes.insert(vcvs->getCtrlNode1());
+            nodes.insert(vcvs->getCtrlNode2());
+        }
+        if(auto vccs = dynamic_cast<const VCCS*>(comp.get())) {
+            nodes.insert(vccs->getCtrlNode1());
+            nodes.insert(vccs->getCtrlNode2());
+        }
         if (comp->addsCurrentVariable()) {
             currentVarCount++;
             currentComponentMap[comp->getName()] = currentVarCount;
         }
     }
     nodeCount = nodes.empty() ? 0 : *nodes.rbegin();
-}
 
-
-void Circuit::renameNode(int oldNode, int newNode) {
     for (auto& comp : components) {
-        comp->updateNode(oldNode, newNode);
+        string ctrlName = comp->getCtrlVName();
+        if (!ctrlName.empty()) {
+            if (currentComponentMap.count(ctrlName)) {
+                int ctrl_idx = nodeCount + currentComponentMap.at(ctrlName) - 1;
+                comp->setCtrlCurrentIdx(ctrl_idx);
+            } else {
+                throw runtime_error("Dependent source '" + comp->getName() + "' has an undefined control source '" + ctrlName + "'");
+            }
+        }
     }
 }
-
 
 void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector<PrintVariable>& printVars) {
     analyzeCircuit();
@@ -92,7 +118,6 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
         cout << "Circuit is empty. Cannot run analysis." << endl;
         return;
     }
-
     bool hasNonLinear = false;
     for (const auto& comp : components) {
         if (comp->isNonLinear()) {
@@ -100,22 +125,17 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
             break;
         }
     }
-
     cout << "--- Starting Transient Analysis ---" << endl;
-    if (hasNonLinear) {
-        cout << "Non-linear elements detected. Newton-Raphson solver activated." << endl;
-    }
-
+    if (hasNonLinear) cout << "Non-linear elements detected. Newton-Raphson solver activated." << endl;
     vector<int> printIndices;
     vector<string> printHeaders;
     bool printAll = printVars.empty();
     printHeaders.push_back("Time(s)");
-
     if (printAll) {
         for (int i = 1; i <= nodeCount; ++i) printHeaders.push_back("V(" + to_string(i) + ")");
         map<int, string> reverseCurrentMap;
-        for (const auto& pair : currentComponentMap) reverseCurrentMap[pair.second] = pair.first;
-        for (const auto& pair : reverseCurrentMap) printHeaders.push_back("I(" + pair.second + ")");
+        for(const auto& pair : currentComponentMap) reverseCurrentMap[pair.second] = pair.first;
+        for(const auto& pair : reverseCurrentMap) printHeaders.push_back("I(" + pair.second + ")");
     } else {
         for (const auto& var : printVars) {
             if (toupper(var.type) == 'V') {
@@ -133,18 +153,12 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
             }
         }
     }
-
-    for (const auto& header : printHeaders) {
-        cout << left << setw(15) << header;
-    }
+    for(const auto& header : printHeaders) cout << left << setw(15) << header;
     cout << endl;
-
     VectorXd x = VectorXd::Zero(matrix_size);
     VectorXd x_prev_t = VectorXd::Zero(matrix_size);
-
     for (double t = 0; t <= endTime; t += timeStep) {
         VectorXd x_nr_guess = x_prev_t;
-
         if (hasNonLinear) {
             const int MAX_NR_ITER = 100;
             const double NR_TOLERANCE = 1e-6;
@@ -180,9 +194,7 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
             }
             x_nr_guess = A.colPivHouseholderQr().solve(b);
         }
-
         x = x_nr_guess;
-
         cout << left << setw(15) << fixed << setprecision(6) << t;
         if (printAll) {
             for (int i = 0; i < matrix_size; ++i) cout << setw(15) << fixed << setprecision(6) << x(i);
@@ -190,9 +202,7 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
             for (int idx : printIndices) cout << setw(15) << fixed << setprecision(6) << x(idx);
         }
         cout << endl;
-
         x_prev_t = x;
-
         for (auto& comp : components) {
             if (auto cap = dynamic_cast<Capacitor*>(comp.get())) {
                 double v1 = (cap->getNode1() > 0) ? x(cap->getNode1() - 1) : 0.0;
