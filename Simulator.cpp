@@ -4,6 +4,28 @@
 #include <set>
 
 /**
+ * @brief سازنده کلاس Simulator.
+ * مدل‌های پیش‌فرض دیود را در اینجا مقداردهی اولیه می‌کند.
+ */
+Simulator::Simulator() {
+    setupDefaultModels();
+}
+
+/**
+ * @brief مدل‌های پیش‌فرض دیود را ایجاد و در نقشه مدل‌ها ذخیره می‌کند.
+ */
+void Simulator::setupDefaultModels() {
+    DiodeModel standard;
+    standard.name = "D";
+    diodeModels["D"] = standard;
+
+    DiodeModel zener;
+    zener.name = "Z";
+    zener.Vz = 5.1; // مثال: ولتاژ شکست 5.1 ولت برای مدل Z
+    diodeModels["Z"] = zener;
+}
+
+/**
  * @brief حلقه اصلی برنامه را اجرا می‌کند که منتظر دستورات کاربر می‌ماند.
  */
 void Simulator::run() {
@@ -112,7 +134,11 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             }
             int n1 = stoi(args[1]);
             int n2 = stoi(args[2]);
-            const string& model = args[3];
+            const string& modelName = args[3];
+            if (diodeModels.find(modelName) == diodeModels.end()) {
+                throw runtime_error("Model <" + modelName + "> not found in library");
+            }
+            const DiodeModel& model = diodeModels.at(modelName);
             circuit.addComponent(make_unique<Diode>(name, n1, n2, model));
             break;
         }
@@ -218,7 +244,7 @@ void Simulator::handleRenameNode(const vector<string>& tokens) {
     if (existingNodes.find(oldNode) == existingNodes.end()) {
         throw runtime_error("Node <" + to_string(oldNode) + "> does not exist in the circuit");
     }
-    if (existingNodes.find(newNode) != existingNodes.end()) {
+    if (newNode != 0 && existingNodes.find(newNode) != existingNodes.end()) {
         throw runtime_error("Node name <" + to_string(newNode) + "> already exists");
     }
     circuit.renameNode(oldNode, newNode);

@@ -17,7 +17,7 @@ void SinusoidalVoltageSource::print() const {
 }
 void Diode::print() const {
     cout << "Type: Diode, Name: " << name << ", Nodes: (" << node1 << "," << node2
-         << "), Model: " << model << endl;
+         << "), Model: " << modelName << endl;
 }
 
 
@@ -83,49 +83,61 @@ void SinusoidalVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
 
-Diode::Diode(const string& name, int n1, int n2, const string& model)
-        : Component(name, n1, n2), model(model) {
-    // پارامترهای مدل ساده دیود استاندارد
-    Is = 1e-14;  // Saturation current (A)
-    Vt = 0.02585; // Thermal voltage (V) at room temperature
-    n = 1.0;      // Ideality factor
+// --- پیاده‌سازی کلاس دیود (نسخه نهایی و اصلاح شده) ---
+
+Diode::Diode(const string& name, int n1, int n2, const DiodeModel& modelParams)
+        : Component(name, n1, n2) {
+    this->modelName = modelParams.name;
+    this->Is = modelParams.Is;
+    this->Vt = modelParams.Vt;
+    this->n = modelParams.n;
+    this->Vz = modelParams.Vz;
 }
 
 void Diode::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = node1 - 1;
     int n2 = node2 - 1;
 
-    // گرفتن ولتاژ دیود از حدس قبلی حلقه نیوتن-رافسون
     double v1 = (n1 >= 0) ? x_prev_nr(n1) : 0.0;
     double v2 = (n2 >= 0) ? x_prev_nr(n2) : 0.0;
     double Vd = v1 - v2;
 
-    // محدود کردن ولتاژ برای جلوگیری از سرریز عددی در تابع exp
-    double Vd_limited = Vd;
-    if (Vd > 0.7) Vd_limited = 0.7;
-    if (Vd < -1.0) Vd_limited = -1.0;
+    // مدل ناحیه شکست زنر
+    if (Vz > 0 && Vd < -Vz) {
+        // مدل‌سازی ناحیه شکست با یک رسانایی بزرگ و یک منبع ولتاژ
+        // I_D = Gz * (Vd + Vz)
+        const double Gz = 100.0; // رسانایی بزرگ در ناحیه شکست
+        double Ieq_zener = Gz * Vz;
 
-    // محاسبه جریان و رسانایی معادل با استفاده از مدل خطی شده
+        // اعمال بخش رسانایی (Gz)
+        if (n1 >= 0) A(n1, n1) += Gz;
+        if (n2 >= 0) A(n2, n2) += Gz;
+        if (n1 >= 0 && n2 >= 0) {
+            A(n1, n2) -= Gz;
+            A(n2, n1) -= Gz;
+        }
+
+        // اعمال بخش منبع جریان.
+        if (n1 >= 0) b(n1) -= Ieq_zener;
+        if (n2 >= 0) b(n2) += Ieq_zener;
+        return;
+    }
+
+    // مدل دیود استاندارد (بایاس مستقیم و معکوس غیرشکست)
+    double Vd_limited = Vd;
+    // فقط ولتاژ مثبت را برای جلوگیری از سرریز عددی محدود می‌کنیم
+    if (Vd > 0.7) {
+        Vd_limited = 0.7;
+    }
+
     double exp_val = exp(Vd_limited / (n * Vt));
     double Id = Is * (exp_val - 1.0);
     double Geq = (Is / (n * Vt)) * exp_val;
+    double Ieq_comp = Id - Geq * Vd_limited;
 
-    // Ieq = Id - Geq * Vd
-    double Ieq = Id - Geq * Vd_limited;
-
-    // اعمال مدل خطی معادل (یک رسانایی موازی با یک منبع جریان) به ماتریس
-    if (n1 >= 0) {
-        A(n1, n1) += Geq;
-        b(n1) -= Ieq;
-    }
-    if (n2 >= 0) {
-        A(n2, n2) += Geq;
-        b(n2) += Ieq;
-    }
-    if (n1 >= 0 && n2 >= 0) {
-        A(n1, n2) -= Geq;
-        A(n2, n1) -= Geq;
-    }
+    if (n1 >= 0) { A(n1, n1) += Geq; b(n1) -= Ieq_comp; }
+    if (n2 >= 0) { A(n2, n2) += Geq; b(n2) += Ieq_comp; }
+    if (n1 >= 0 && n2 >= 0) { A(n1, n2) -= Geq; A(n2, n1) -= Geq; }
 }
 
 

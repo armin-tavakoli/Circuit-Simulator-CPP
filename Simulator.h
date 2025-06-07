@@ -10,11 +10,13 @@
 #include "Component.h"
 #include "ValueParser.h"
 #include "PrintRequest.h"
+#include "DiodeModel.h"
 
 using namespace std;
 
 class Simulator {
 public:
+    Simulator();
     void run();
 
 private:
@@ -31,8 +33,10 @@ private:
     void handleRenameNode(const vector<string>& tokens);
     void handlePrint(const vector<string>& tokens);
     void handleGnd(const vector<string>& tokens); // --- متد جدید ---
-
     void addComponentFromTokens(const vector<string>& args);
+    map<string, DiodeModel> diodeModels; // برای نگهداری مدل‌های دیود
+    void setupDefaultModels();
+
     Circuit circuit;
 };
 
