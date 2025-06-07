@@ -1,0 +1,11 @@
+{
+"rules": [
+{
+"primary-output": "CMakeFiles\\circuit_simulator.dir\\Circuit.cpp.obj",
+"requires": [
+]
+}
+],
+"version": 0,
+"revision": 0
+}
