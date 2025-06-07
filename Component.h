@@ -87,19 +87,27 @@ private:
 
 class Diode : public Component {
 public:
-    // سازنده حالا پارامترهای مدل را مستقیماً دریافت می‌کند
     Diode(const string& name, int n1, int n2, const DiodeModel& modelParams);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool isNonLinear() const override { return true; }
-
 private:
-    // دیود حالا پارامترهای مدل خود را ذخیره می‌کند
     string modelName;
     double Is;
     double Vt;
     double n;
-    double Vz; // ولتاژ شکست زنر
+    double Vz;
+};
+
+// --- کلاس جدید برای منبع جریان ---
+class CurrentSource : public Component {
+public:
+    CurrentSource(const string& name, int n1, int n2, double current);
+    void print() const override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+
+private:
+    double current;
 };
 
 #endif // COMPONENT_H

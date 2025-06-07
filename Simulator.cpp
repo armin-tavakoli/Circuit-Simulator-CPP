@@ -2,17 +2,17 @@
 #include <stdexcept>
 #include <algorithm>
 #include <set>
+#include <filesystem>
 
 /**
  * @brief سازنده کلاس Simulator.
- * مدل‌های پیش‌فرض دیود را در اینجا مقداردهی اولیه می‌کند.
  */
 Simulator::Simulator() {
     setupDefaultModels();
 }
 
 /**
- * @brief مدل‌های پیش‌فرض دیود را ایجاد و در نقشه مدل‌ها ذخیره می‌کند.
+ * @brief مدل‌های پیش‌فرض دیود را ایجاد می‌کند.
  */
 void Simulator::setupDefaultModels() {
     DiodeModel standard;
@@ -21,17 +21,17 @@ void Simulator::setupDefaultModels() {
 
     DiodeModel zener;
     zener.name = "Z";
-    zener.Vz = 5.1; // مثال: ولتاژ شکست 5.1 ولت برای مدل Z
+    zener.Vz = 5.1;
     diodeModels["Z"] = zener;
 }
 
 /**
- * @brief حلقه اصلی برنامه را اجرا می‌کند که منتظر دستورات کاربر می‌ماند.
+ * @brief حلقه اصلی برنامه را اجرا می‌کند.
  */
 void Simulator::run() {
     string command;
     cout << "Welcome to the Circuit Simulator!" << endl;
-    cout << "Enter commands ('netlist ...', 'gnd <node>', 'exit')." << endl;
+    cout << "Enter commands ('show schematics', 'exit')." << endl;
 
     while (true) {
         cout << "> ";
@@ -73,6 +73,7 @@ void Simulator::processCommand(const string& command) {
     else if (cmd == "rename") handleRenameNode(tokens);
     else if (cmd == "print") handlePrint(tokens);
     else if (cmd == "gnd") handleGnd(tokens);
+    else if (cmd == "show") handleShow(tokens);
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
@@ -107,7 +108,6 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             if (args.size() < 4) throw runtime_error("V source definition requires at least 4 arguments.");
             int n1 = stoi(args[1]);
             int n2 = stoi(args[2]);
-
             if (args.size() >= 5 && args[3] == "SIN") {
                 auto it_open = find(args.begin(), args.end(), "(");
                 auto it_close = find(args.begin(), args.end(), ")");
@@ -129,9 +129,7 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             break;
         }
         case 'D': {
-            if (args.size() != 4) {
-                throw runtime_error("Diode definition requires exactly 4 arguments: D<name> n1 n2 <model>");
-            }
+            if (args.size() != 4) throw runtime_error("Diode definition requires exactly 4 arguments: D<name> n1 n2 <model>");
             int n1 = stoi(args[1]);
             int n2 = stoi(args[2]);
             const string& modelName = args[3];
@@ -142,15 +140,22 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             circuit.addComponent(make_unique<Diode>(name, n1, n2, model));
             break;
         }
+        case 'I': {
+            if (args.size() != 4) {
+                throw runtime_error("Current Source definition requires exactly 4 arguments: I<name> n1 n2 <value>");
+            }
+            int n1 = stoi(args[1]);
+            int n2 = stoi(args[2]);
+            double value = parseValue(args[3]);
+            circuit.addComponent(make_unique<CurrentSource>(name, n1, n2, value));
+            break;
+        }
         default: {
             throw runtime_error("Unknown component type '" + string(1, compType) + "'");
         }
     }
 }
 
-/**
- * @brief دستور 'add' را از خط فرمان پردازش می‌کند.
- */
 void Simulator::handleAdd(const vector<string>& tokens) {
     if (tokens.size() < 2) throw runtime_error("'add' requires arguments.");
     vector<string> args(tokens.begin() + 1, tokens.end());
@@ -158,9 +163,6 @@ void Simulator::handleAdd(const vector<string>& tokens) {
     cout << "Added component " << args[0] << endl;
 }
 
-/**
- * @brief دستور 'netlist' را برای خواندن مدار از فایل پردازش می‌کند.
- */
 void Simulator::handleNetlist(const vector<string>& tokens) {
     if (tokens.size() != 2) throw runtime_error("Usage: netlist <filepath>");
     string filepath = tokens[1];
@@ -191,9 +193,6 @@ void Simulator::handleNetlist(const vector<string>& tokens) {
     cout << "Netlist loading finished." << endl;
 }
 
-/**
- * @brief دستور 'delete' را پردازش می‌کند.
- */
 void Simulator::handleDelete(const vector<string>& tokens) {
     if (tokens.size() != 2) throw runtime_error("Usage: delete <CompName>");
     string name = tokens[1];
@@ -201,18 +200,12 @@ void Simulator::handleDelete(const vector<string>& tokens) {
     cout << "Deleted component " << name << endl;
 }
 
-/**
- * @brief دستور 'list' را برای نمایش المان‌ها پردازش می‌کند.
- */
 void Simulator::handleList(const vector<string>& tokens) {
     if (tokens.size() > 2) throw runtime_error("Usage: list [type]");
     if (tokens.size() == 2) circuit.printCircuit(tokens[1][0]);
     else circuit.printCircuit('A');
 }
 
-/**
- * @brief دستور 'nodes' را برای نمایش گره‌های موجود پردازش می‌کند.
- */
 void Simulator::handleNodes() {
     set<int> nodes = circuit.getNodes();
     if (nodes.empty()) {
@@ -224,16 +217,10 @@ void Simulator::handleNodes() {
     cout << endl;
 }
 
-/**
- * @brief دستور 'reset' را برای پاک کردن مدار پردازش می‌کند.
- */
 void Simulator::handleReset() {
     circuit.clear();
 }
 
-/**
- * @brief دستور 'rename' را برای تغییر نام گره پردازش می‌کند.
- */
 void Simulator::handleRenameNode(const vector<string>& tokens) {
     if (tokens.size() != 4 || tokens[1] != "node") {
         throw runtime_error("Syntax error. Usage: rename node <old_name> <new_name>");
@@ -251,9 +238,6 @@ void Simulator::handleRenameNode(const vector<string>& tokens) {
     cout << "SUCCESS: Node renamed from <" << oldNode << "> to <" << newNode << ">" << endl;
 }
 
-/**
- * @brief دستور 'run' را برای شروع تحلیل گذرا پردازش می‌کند.
- */
 void Simulator::handleRun(const vector<string>& tokens) {
     if (tokens.size() != 3) throw runtime_error("Usage: run <EndTime> <TimeStep>");
     double endTime = parseValue(tokens[1]);
@@ -261,9 +245,6 @@ void Simulator::handleRun(const vector<string>& tokens) {
     circuit.runTransientAnalysis(endTime, timeStep, {});
 }
 
-/**
- * @brief دستور 'print' را برای تحلیل و چاپ متغیرهای خاص پردازش می‌کند.
- */
 void Simulator::handlePrint(const vector<string>& tokens) {
     if (tokens.size() < 4 || tokens[1] != "TRAN") {
         throw runtime_error("Syntax error. Usage: print TRAN <Tstep> <Tstop> <Var1> <Var2> ...");
@@ -288,9 +269,6 @@ void Simulator::handlePrint(const vector<string>& tokens) {
     circuit.runTransientAnalysis(tStop, tStep, printVars);
 }
 
-/**
- * @brief دستور 'gnd' را برای اتصال یک گره به زمین پردازش می‌کند.
- */
 void Simulator::handleGnd(const vector<string>& tokens) {
     if (tokens.size() != 2) {
         throw runtime_error("Syntax error. Usage: gnd <node_number>");
@@ -317,4 +295,55 @@ void Simulator::handleGnd(const vector<string>& tokens) {
 
     circuit.renameNode(oldNode, newNode);
     cout << "SUCCESS: Node " << oldNode << " is now connected to ground (renamed to 0)." << endl;
+}
+
+void Simulator::handleShow(const vector<string>& tokens) {
+    if (tokens.size() != 2 || tokens[1] != "schematics") {
+        throw runtime_error("Syntax error. Usage: show schematics");
+    }
+
+    string path = ".";
+    vector<string> schematicFiles;
+
+    cout << "Searching for schematics in current directory..." << endl;
+    for (const auto& entry : filesystem::directory_iterator(path)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".txt") {
+            schematicFiles.push_back(entry.path().filename().string());
+        }
+    }
+
+    if (schematicFiles.empty()) {
+        cout << "No schematic files (.txt) found in the current directory." << endl;
+        return;
+    }
+
+    cout << "--- Available Schematics ---" << endl;
+    for (size_t i = 0; i < schematicFiles.size(); ++i) {
+        cout << i + 1 << "- " << schematicFiles[i] << endl;
+    }
+    cout << "----------------------------" << endl;
+
+    while (true) {
+        cout << "Choose a schematic (1-" << schematicFiles.size() << ") or type 'return' to go back: ";
+        string choice_str;
+        getline(cin, choice_str);
+
+        if (choice_str == "return") {
+            cout << "Returning to main menu." << endl;
+            break;
+        }
+
+        try {
+            int choice = stoi(choice_str);
+            if (choice >= 1 && choice <= schematicFiles.size()) {
+                string selectedFile = schematicFiles[choice - 1];
+                processCommand("netlist " + selectedFile);
+                break;
+            } else {
+                cerr << "Error: Invalid number. Please choose between 1 and " << schematicFiles.size() << "." << endl;
+            }
+        } catch (const invalid_argument& e) {
+            cerr << "Error: Invalid input. Please enter a number or 'return'." << endl;
+        }
+    }
 }

@@ -32,9 +32,12 @@ private:
     void handleReset();
     void handleRenameNode(const vector<string>& tokens);
     void handlePrint(const vector<string>& tokens);
-    void handleGnd(const vector<string>& tokens); // --- متد جدید ---
+    void handleGnd(const vector<string>& tokens);
+    void handleShow(const vector<string>& tokens); // --- متد جدید ---
+
     void addComponentFromTokens(const vector<string>& args);
-    map<string, DiodeModel> diodeModels; // برای نگهداری مدل‌های دیود
+
+    map<string, DiodeModel> diodeModels;
     void setupDefaultModels();
 
     Circuit circuit;

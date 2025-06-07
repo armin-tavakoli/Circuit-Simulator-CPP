@@ -19,6 +19,10 @@ void Diode::print() const {
     cout << "Type: Diode, Name: " << name << ", Nodes: (" << node1 << "," << node2
          << "), Model: " << modelName << endl;
 }
+void CurrentSource::print() const {
+    cout << "Type: Current Source, Name: " << name << ", Nodes: (" << node1 << " -> " << node2
+         << "), I=" << current << " A" << endl;
+}
 
 
 // --- متدهای Stamp ---
@@ -83,8 +87,6 @@ void SinusoidalVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
 
-// --- پیاده‌سازی کلاس دیود (نسخه نهایی و اصلاح شده) ---
-
 Diode::Diode(const string& name, int n1, int n2, const DiodeModel& modelParams)
         : Component(name, n1, n2) {
     this->modelName = modelParams.name;
@@ -102,33 +104,17 @@ void Diode::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int curre
     double v2 = (n2 >= 0) ? x_prev_nr(n2) : 0.0;
     double Vd = v1 - v2;
 
-    // مدل ناحیه شکست زنر
     if (Vz > 0 && Vd < -Vz) {
-        // مدل‌سازی ناحیه شکست با یک رسانایی بزرگ و یک منبع ولتاژ
-        // I_D = Gz * (Vd + Vz)
-        const double Gz = 100.0; // رسانایی بزرگ در ناحیه شکست
+        const double Gz = 100.0;
         double Ieq_zener = Gz * Vz;
-
-        // اعمال بخش رسانایی (Gz)
-        if (n1 >= 0) A(n1, n1) += Gz;
-        if (n2 >= 0) A(n2, n2) += Gz;
-        if (n1 >= 0 && n2 >= 0) {
-            A(n1, n2) -= Gz;
-            A(n2, n1) -= Gz;
-        }
-
-        // اعمال بخش منبع جریان.
-        if (n1 >= 0) b(n1) -= Ieq_zener;
-        if (n2 >= 0) b(n2) += Ieq_zener;
+        if (n1 >= 0) { A(n1, n1) += Gz; b(n1) -= Ieq_zener; }
+        if (n2 >= 0) { A(n2, n2) += Gz; b(n2) += Ieq_zener; }
+        if (n1 >= 0 && n2 >= 0) { A(n1, n2) -= Gz; A(n2, n1) -= Gz; }
         return;
     }
 
-    // مدل دیود استاندارد (بایاس مستقیم و معکوس غیرشکست)
     double Vd_limited = Vd;
-    // فقط ولتاژ مثبت را برای جلوگیری از سرریز عددی محدود می‌کنیم
-    if (Vd > 0.7) {
-        Vd_limited = 0.7;
-    }
+    if (Vd > 0.7) Vd_limited = 0.7;
 
     double exp_val = exp(Vd_limited / (n * Vt));
     double Id = Is * (exp_val - 1.0);
@@ -138,6 +124,25 @@ void Diode::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int curre
     if (n1 >= 0) { A(n1, n1) += Geq; b(n1) -= Ieq_comp; }
     if (n2 >= 0) { A(n2, n2) += Geq; b(n2) += Ieq_comp; }
     if (n1 >= 0 && n2 >= 0) { A(n1, n2) -= Geq; A(n2, n1) -= Geq; }
+}
+
+// --- پیاده‌سازی متدهای منبع جریان (نسخه اصلاح شده) ---
+CurrentSource::CurrentSource(const string& name, int n1, int n2, double current)
+        : Component(name, n1, n2), current(current) {}
+
+void CurrentSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
+    int n1 = node1 - 1;
+    int n2 = node2 - 1;
+
+    // قرارداد صحیح: جریان به گره n1 وارد شده و از گره n2 خارج می‌شود.
+    // جریان ورودی به یک گره در سمت راست معادله (بردار b) با علامت مثبت ظاهر می‌شود.
+    if (n1 >= 0) {
+        b(n1) += current;
+    }
+    // جریان خروجی از یک گره با علامت منفی ظاهر می‌شود.
+    if (n2 >= 0) {
+        b(n2) -= current;
+    }
 }
 
 
