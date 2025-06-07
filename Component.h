@@ -14,14 +14,12 @@ public:
     Component(const string& name, int n1, int n2) : name(name), node1(n1), node2(n2) {}
     virtual ~Component() = default;
     virtual void print() const = 0;
-    virtual void stamp(MatrixXd& A, VectorXd& b, int current_idx, double h, double t) = 0;
+    virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) = 0;
     virtual bool addsCurrentVariable() const { return false; }
+    virtual bool isNonLinear() const { return false; }
     string getName() const { return name; }
     int getNode1() const { return node1; }
     int getNode2() const { return node2; }
-
-    // --- متد جدید ---
-    // این متد بررسی می‌کند که آیا گره‌های این المان با گره قدیمی مطابقت دارند یا خیر و آن‌ها را به‌روز می‌کند.
     void updateNode(int oldNode, int newNode);
 
 protected:
@@ -30,12 +28,11 @@ protected:
     int node2;
 };
 
-// ... بقیه کلاس‌ها (Resistor, Capacitor, etc.) بدون تغییر در تعریف ...
 class Resistor : public Component {
 public:
     Resistor(const string& name, int n1, int n2, double res) : Component(name, n1, n2), resistance(res) {}
     void print() const override;
-    void stamp(MatrixXd& A, VectorXd& b, int current_idx, double h, double t) override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
 private:
     double resistance;
 };
@@ -45,7 +42,7 @@ public:
     Capacitor(const string& name, int n1, int n2, double cap)
             : Component(name, n1, n2), capacitance(cap), prev_voltage(0.0) {}
     void print() const override;
-    void stamp(MatrixXd& A, VectorXd& b, int current_idx, double h, double t) override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     void updateVoltage(double new_voltage) { prev_voltage = new_voltage; }
 private:
     double capacitance;
@@ -56,7 +53,7 @@ class VoltageSource : public Component {
 public:
     VoltageSource(const string& name, int n1, int n2, double vol) : Component(name, n1, n2), voltage(vol) {}
     void print() const override;
-    virtual void stamp(MatrixXd& A, VectorXd& b, int current_idx, double h, double t) override;
+    virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool addsCurrentVariable() const override { return true; }
 protected:
     double voltage;
@@ -67,7 +64,7 @@ public:
     Inductor(const string& name, int n1, int n2, double ind)
             : Component(name, n1, n2), inductance(ind), prev_current(0.0) {}
     void print() const override;
-    void stamp(MatrixXd& A, VectorXd& b, int current_idx, double h, double t) override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool addsCurrentVariable() const override { return true; }
     void updateCurrent(double new_current) { prev_current = new_current; }
 private:
@@ -80,12 +77,24 @@ public:
     SinusoidalVoltageSource(const string& name, int n1, int n2, double offset, double amplitude, double frequency)
             : VoltageSource(name, n1, n2, offset), v_offset(offset), v_amplitude(amplitude), freq(frequency) {}
     void print() const override;
-    void stamp(MatrixXd& A, VectorXd& b, int current_idx, double h, double t) override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
 private:
     double v_offset;
     double v_amplitude;
     double freq;
 };
 
+class Diode : public Component {
+public:
+    Diode(const string& name, int n1, int n2, const string& model);
+    void print() const override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    bool isNonLinear() const override { return true; }
+private:
+    string model;
+    double Is; // Saturation Current
+    double Vt; // Thermal Voltage
+    double n;  // Ideality factor
+};
 
 #endif // COMPONENT_H

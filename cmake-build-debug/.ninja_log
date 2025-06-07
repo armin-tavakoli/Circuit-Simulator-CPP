@@ -24,3 +24,10 @@
 30	19178	7710105385346232	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	401566add20e2fdf
 37	7073	7710107623411174	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	3ec74091207c0859
 7074	8163	7710107693791850	circuit_simulator.exe	a91e3b38c1281f68
+20	9261	7710159187234758	CMakeFiles/circuit_simulator.dir/main.cpp.obj	7f0350f3c10065a3
+36	9414	7710159187394502	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	3fb23f8c76677823
+52	10282	7710159187554510	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	3ec74091207c0859
+27	26035	7710159187304502	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	401566add20e2fdf
+26035	27088	7710159447381830	circuit_simulator.exe	a91e3b38c1281f68
+33	7403	7710162044881105	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	3ec74091207c0859
+7404	8695	7710162118586261	circuit_simulator.exe	a91e3b38c1281f68

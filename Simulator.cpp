@@ -53,9 +53,8 @@ void Simulator::processCommand(const string& command) {
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
-
 /**
- * @brief تابع کمکی برای افزودن یک المان از روی آرگومان‌های تجزیه شده.
+ * @brief تابع کمکی برای افزودن یک المان با ساختار منطقی جدید و ایمن.
  */
 void Simulator::addComponentFromTokens(const vector<string>& args) {
     if (args.empty()) return;
@@ -72,38 +71,37 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
         case 'R':
         case 'C':
         case 'L': {
-            if (args.size() != 4) {
-                throw runtime_error("R/C/L definition requires exactly 4 arguments.");
-            }
+            if (args.size() != 4) throw runtime_error("R/C/L definition requires exactly 4 arguments.");
             int n1 = stoi(args[1]);
             int n2 = stoi(args[2]);
             double value = parseValue(args[3]);
-            if (value <= 0) {
-                throw runtime_error("Value for R, C, or L must be positive.");
-            }
-
+            if (value <= 0) throw runtime_error("Value for R, C, or L must be positive.");
             if (compType == 'R') circuit.addComponent(make_unique<Resistor>(name, n1, n2, value));
             else if (compType == 'C') circuit.addComponent(make_unique<Capacitor>(name, n1, n2, value));
             else if (compType == 'L') circuit.addComponent(make_unique<Inductor>(name, n1, n2, value));
             break;
         }
         case 'V': {
-            if (args.size() < 4) {
-                throw runtime_error("V source definition requires at least 4 arguments.");
-            }
+            if (args.size() < 4) throw runtime_error("V source definition requires at least 4 arguments.");
             int n1 = stoi(args[1]);
             int n2 = stoi(args[2]);
 
-            // بررسی دقیق برای منبع سینوسی
-            if (args.size() >= 8 && args[3] == "SIN") {
-                if (args[4] != "(" || args[7].back() != ')') {
-                    throw runtime_error("Syntax for SIN: SIN ( Voff Vamp Freq )");
+            // --- منطق اصلاح شده و صحیح برای منبع سینوسی ---
+            // فرمت: V... n1 n2 SIN ( Voff Vamp Freq )
+            if (args.size() >= 5 && args[3] == "SIN") {
+                // پیدا کردن موقعیت پرانتزها
+                auto it_open = find(args.begin(), args.end(), "(");
+                auto it_close = find(args.begin(), args.end(), ")");
+
+                // فاصله بین پرانتزها باید دقیقا ۳ پارامتر باشد
+                if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 4) {
+                    throw runtime_error("Syntax error for SIN source. Expected format: SIN ( Voff Vamp Freq )");
                 }
-                double v_off = parseValue(args[5]);
-                double v_amp = parseValue(args[6]);
-                string freq_str = args[7];
-                freq_str.pop_back();
-                double freq = parseValue(freq_str);
+
+                double v_off = parseValue(*(it_open + 1));
+                double v_amp = parseValue(*(it_open + 2));
+                double freq = parseValue(*(it_open + 3));
+
                 circuit.addComponent(make_unique<SinusoidalVoltageSource>(name, n1, n2, v_off, v_amp, freq));
             }
                 // بررسی برای منبع DC
@@ -116,12 +114,21 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             }
             break;
         }
+        case 'D': {
+            if (args.size() != 4) {
+                throw runtime_error("Diode definition requires exactly 4 arguments: D<name> n1 n2 <model>");
+            }
+            int n1 = stoi(args[1]);
+            int n2 = stoi(args[2]);
+            const string& model = args[3];
+            circuit.addComponent(make_unique<Diode>(name, n1, n2, model));
+            break;
+        }
         default: {
             throw runtime_error("Unknown component type '" + string(1, compType) + "'");
         }
     }
 }
-
 
 void Simulator::handleAdd(const vector<string>& tokens) {
     if (tokens.size() < 2) throw runtime_error("'add' requires arguments.");
@@ -167,6 +174,13 @@ void Simulator::handleDelete(const vector<string>& tokens) {
     cout << "Deleted component " << name << endl;
 }
 
+void Simulator::handleRun(const vector<string>& tokens) {
+    if (tokens.size() != 3) throw runtime_error("Usage: run <EndTime> <TimeStep>");
+    double endTime = parseValue(tokens[1]);
+    double timeStep = parseValue(tokens[2]);
+    circuit.runTransientAnalysis(endTime, timeStep, {});
+}
+
 void Simulator::handleList(const vector<string>& tokens) {
     if (tokens.size() > 2) throw runtime_error("Usage: list [type]");
     if (tokens.size() == 2) circuit.printCircuit(tokens[1][0]);
@@ -192,66 +206,39 @@ void Simulator::handleRenameNode(const vector<string>& tokens) {
     if (tokens.size() != 4 || tokens[1] != "node") {
         throw runtime_error("Syntax error. Usage: rename node <old_name> <new_name>");
     }
-
     int oldNode = stoi(tokens[2]);
     int newNode = stoi(tokens[3]);
-
     set<int> existingNodes = circuit.getNodes();
-
     if (existingNodes.find(oldNode) == existingNodes.end()) {
         throw runtime_error("Node <" + to_string(oldNode) + "> does not exist in the circuit");
     }
-
     if (existingNodes.find(newNode) != existingNodes.end()) {
         throw runtime_error("Node name <" + to_string(newNode) + "> already exists");
     }
-
     circuit.renameNode(oldNode, newNode);
     cout << "SUCCESS: Node renamed from <" << oldNode << "> to <" << newNode << ">" << endl;
 }
 
-/**
- * @brief دستور 'run' را پردازش می‌کند. این دستور یک میان‌بر برای چاپ تمام خروجی‌ها است.
- */
-void Simulator::handleRun(const vector<string>& tokens) {
-    if (tokens.size() != 3) throw runtime_error("Syntax error. Usage: run <EndTime> <TimeStep>");
-    double endTime = parseValue(tokens[1]);
-    double timeStep = parseValue(tokens[2]);
-    // فراخوانی تحلیل با لیست خالی برای چاپ تمام متغیرها
-    circuit.runTransientAnalysis(endTime, timeStep, {});
-}
-
-/**
- * @brief دستور 'print' را برای تحلیل و چاپ متغیرهای خاص پردازش می‌کند.
- */
 void Simulator::handlePrint(const vector<string>& tokens) {
     if (tokens.size() < 4 || tokens[1] != "TRAN") {
         throw runtime_error("Syntax error. Usage: print TRAN <Tstep> <Tstop> <Var1> <Var2> ...");
     }
-
     double tStep = parseValue(tokens[2]);
     double tStop = parseValue(tokens[3]);
-
     vector<PrintVariable> printVars;
-    // شروع از آرگومان چهارم برای استخراج متغیرها
     for (size_t i = 4; i < tokens.size(); ++i) {
         const string& varStr = tokens[i];
         if (varStr.length() < 4) throw runtime_error("Invalid variable format: " + varStr);
-
         char type = toupper(varStr[0]);
-        string id = varStr.substr(2, varStr.length() - 3); // استخراج id از بین V(id) یا I(id)
-
+        string id = varStr.substr(2, varStr.length() - 3);
         if ((type == 'V' || type == 'I') && varStr[1] == '(' && varStr.back() == ')') {
             printVars.push_back({type, id});
         } else {
             throw runtime_error("Invalid variable format: " + varStr + ". Expected V(node) or I(comp).");
         }
     }
-
-    // اگر هیچ متغیر معتبری پیدا نشد، خطا می‌دهیم
     if (tokens.size() > 4 && printVars.empty()){
         cout << "Warning: No valid variables found to print." << endl;
     }
-
     circuit.runTransientAnalysis(tStop, tStep, printVars);
 }
