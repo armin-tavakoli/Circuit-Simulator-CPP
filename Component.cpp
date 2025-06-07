@@ -74,3 +74,12 @@ void SinusoidalVoltageSource::stamp(MatrixXd& A, VectorXd& b, int current_idx, d
     if (n1 >= 0) A(n1, current_idx) = 1.0;
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
+
+void Component::updateNode(int oldNode, int newNode) {
+    if (node1 == oldNode) {
+        node1 = newNode;
+    }
+    if (node2 == oldNode) {
+        node2 = newNode;
+    }
+}

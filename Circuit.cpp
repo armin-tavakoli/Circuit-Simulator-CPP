@@ -62,6 +62,12 @@ set<int> Circuit::getNodes() const {
     return nodes;
 }
 
+void Circuit::renameNode(int oldNode, int newNode) {
+    for (auto& comp : components) {
+        comp->updateNode(oldNode, newNode);
+    }
+}
+
 void Circuit::analyzeCircuit() {
     set<int> nodes;
     currentVarCount = 0;
@@ -77,7 +83,7 @@ void Circuit::analyzeCircuit() {
     nodeCount = nodes.empty() ? 0 : *nodes.rbegin();
 }
 
-void Circuit::runTransientAnalysis(double endTime, double timeStep) {
+void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector<PrintVariable>& printVars) {
     analyzeCircuit();
     int matrix_size = nodeCount + currentVarCount;
     if (matrix_size == 0) {
@@ -88,13 +94,51 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep) {
     cout << "--- Starting Transient Analysis ---" << endl;
     cout << "Nodes: " << nodeCount << ", Current Vars: " << currentVarCount << ", Matrix: " << matrix_size << "x" << matrix_size << endl;
 
-    cout << left << setw(12) << "Time(s)";
-    for (int i = 1; i <= nodeCount; ++i) cout << setw(12) << ("V(" + to_string(i) + ")");
-    map<int, string> reverseCurrentMap;
-    for(const auto& pair : currentComponentMap) reverseCurrentMap[pair.second] = pair.first;
-    for(const auto& pair : reverseCurrentMap) cout << setw(12) << ("I(" + pair.second + ")");
+    // --- ساخت هدر و لیست اندیس‌ها برای چاپ پویا ---
+    vector<int> printIndices;
+    vector<string> printHeaders;
+
+    bool printAll = printVars.empty();
+
+    // هدر زمان همیشه چاپ می‌شود
+    printHeaders.push_back("Time(s)");
+
+    if (printAll) {
+        // رفتار پیش‌فرض: چاپ تمام ولتاژها و جریان‌ها
+        for (int i = 1; i <= nodeCount; ++i) printHeaders.push_back("V(" + to_string(i) + ")");
+        map<int, string> reverseCurrentMap;
+        for(const auto& pair : currentComponentMap) reverseCurrentMap[pair.second] = pair.first;
+        for(const auto& pair : reverseCurrentMap) printHeaders.push_back("I(" + pair.second + ")");
+    } else {
+        // چاپ فقط متغیرهای درخواستی
+        for (const auto& var : printVars) {
+            if (toupper(var.type) == 'V') {
+                int nodeNum = stoi(var.id);
+                if (nodeNum > 0 && nodeNum <= nodeCount) {
+                    printIndices.push_back(nodeNum - 1);
+                    printHeaders.push_back("V(" + var.id + ")");
+                } else {
+                    cerr << "Warning: Node " << nodeNum << " not found. Ignoring." << endl;
+                }
+            } else if (toupper(var.type) == 'I') {
+                if (currentComponentMap.count(var.id)) {
+                    int m_idx = currentComponentMap.at(var.id);
+                    printIndices.push_back(nodeCount + m_idx - 1);
+                    printHeaders.push_back("I(" + var.id + ")");
+                } else {
+                    cerr << "Warning: Component '" << var.id << "' for current measurement not found or has no current variable. Ignoring." << endl;
+                }
+            }
+        }
+    }
+
+    // چاپ هدر نهایی
+    for(const auto& header : printHeaders) {
+        cout << left << setw(15) << header;
+    }
     cout << endl;
 
+    // --- حلقه اصلی شبیه‌سازی ---
     for (double t = 0; t <= endTime; t += timeStep) {
         MatrixXd A = MatrixXd::Zero(matrix_size, matrix_size);
         VectorXd b = VectorXd::Zero(matrix_size);
@@ -102,22 +146,27 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep) {
         for (const auto& comp : components) {
             int final_current_idx = -1;
             if (comp->addsCurrentVariable()) {
-                int m_idx = currentComponentMap.at(comp->getName());
-                final_current_idx = nodeCount + m_idx - 1;
+                final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
             }
             comp->stamp(A, b, final_current_idx, timeStep, t);
         }
 
         VectorXd x = A.colPivHouseholderQr().solve(b);
 
-        cout << left << setw(12) << fixed << setprecision(6) << t;
-        for (int i = 0; i < nodeCount; ++i) cout << setw(12) << fixed << setprecision(6) << x(i);
-        for (const auto& pair : reverseCurrentMap) {
-            int current_idx = nodeCount + pair.first - 1;
-            cout << setw(12) << fixed << setprecision(6) << x(current_idx);
+        // چاپ ردیف نتایج
+        cout << left << setw(15) << fixed << setprecision(6) << t;
+        if (printAll) {
+            for (int i = 0; i < matrix_size; ++i) {
+                cout << setw(15) << fixed << setprecision(6) << x(i);
+            }
+        } else {
+            for (int idx : printIndices) {
+                cout << setw(15) << fixed << setprecision(6) << x(idx);
+            }
         }
         cout << endl;
 
+        // به‌روزرسانی حالت المان‌ها برای گام بعدی
         for (auto& comp : components) {
             if (auto cap = dynamic_cast<Capacitor*>(comp.get())) {
                 double v1 = (cap->getNode1() > 0) ? x(cap->getNode1() - 1) : 0.0;

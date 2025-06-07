@@ -27,6 +27,9 @@ private:
     void handleNodes();
     void handleNetlist(const vector<string>& tokens);
     void handleReset();
+    void handleRenameNode(const vector<string>& tokens); // متد جدید
+
+    void handlePrint(const vector<string>& tokens);
 
     // تابع کمکی برای افزودن المان
     void addComponentFromTokens(const vector<string>& args);

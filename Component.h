@@ -20,12 +20,17 @@ public:
     int getNode1() const { return node1; }
     int getNode2() const { return node2; }
 
+    // --- متد جدید ---
+    // این متد بررسی می‌کند که آیا گره‌های این المان با گره قدیمی مطابقت دارند یا خیر و آن‌ها را به‌روز می‌کند.
+    void updateNode(int oldNode, int newNode);
+
 protected:
     string name;
     int node1;
     int node2;
 };
 
+// ... بقیه کلاس‌ها (Resistor, Capacitor, etc.) بدون تغییر در تعریف ...
 class Resistor : public Component {
 public:
     Resistor(const string& name, int n1, int n2, double res) : Component(name, n1, n2), resistance(res) {}
@@ -81,5 +86,6 @@ private:
     double v_amplitude;
     double freq;
 };
+
 
 #endif // COMPONENT_H
