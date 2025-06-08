@@ -112,6 +112,9 @@ void Circuit::analyzeCircuit() {
 }
 
 void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars, double Tstart, double Tmaxstep) {
+    for (const auto& comp : components) {
+        comp->resetState();
+    }
     analyzeCircuit();
     int matrix_size = nodeCount + currentVarCount;
     if (matrix_size == 0) {

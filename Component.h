@@ -18,6 +18,7 @@ public:
     virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) = 0;
     virtual bool addsCurrentVariable() const { return false; }
     virtual bool isNonLinear() const { return false; }
+    virtual void resetState() {}
     string getName() const { return name; }
     int getNode1() const { return node1; }
     int getNode2() const { return node2; }
@@ -52,6 +53,7 @@ public:
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     void updateVoltage(double new_voltage) { prev_voltage = new_voltage; }
+    void resetState() override { prev_voltage = 0.0; }
 private:
     double capacitance;
     double prev_voltage;
@@ -87,6 +89,7 @@ public:
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool addsCurrentVariable() const override { return true; }
     void updateCurrent(double new_current) { prev_current = new_current; }
+    void resetState() override { prev_current = 0.0; }
 private:
     double inductance;
     double prev_current;
