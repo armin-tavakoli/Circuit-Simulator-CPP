@@ -491,9 +491,10 @@ void Simulator::handleHelp() {
     cout << "    - Runs a simple transient analysis, printing all variables." << endl;
     cout << "    - Example: run 1m 1u" << endl << endl;
 
-    cout << "  print TRAN <Tstep> <Tstop> <Var1> ..." << endl;
+    cout << "  print TRAN <Tstep> <Tstop> [<Tstart>] [<Tmaxstep>] <Var1> ..." << endl;
     cout << "    - Runs a transient analysis, printing only specified variables." << endl;
-    cout << "    - Example: print TRAN 1u 10m V(2) I(Vin)" << endl << endl;
+    cout << "    - Tstart and Tmaxstep are optional." << endl;
+    cout << "    - Example: print TRAN 1u 10m 5m V(2)" << endl << endl;
 
     cout << "  nodes" << endl;
     cout << "    - Lists all unique node numbers in the circuit." << endl << endl;
