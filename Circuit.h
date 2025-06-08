@@ -20,7 +20,7 @@ public:
     bool hasComponent(const string& name) const;
     void printCircuit(char type = 'A') const;
 
-    // امضای متد برای پذیرش پارامترهای اختیاری Tstart و Tmaxstep به‌روز شده است
+    // The method signature is updated to accept optional Tstart and Tmaxstep parameters
     void runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars = {}, double Tstart = 0.0, double Tmaxstep = 0.0);
 
     void clear();
@@ -36,6 +36,8 @@ private:
     int currentVarCount = 0;
 
     void analyzeCircuit();
+    // New function to check for ground node and connectivity
+    void checkConnectivity() const;
 };
 
 #endif // CIRCUIT_H

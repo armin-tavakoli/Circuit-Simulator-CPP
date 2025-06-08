@@ -3,6 +3,76 @@
 #include <iomanip>
 #include <set>
 #include <map>
+#include <queue> // For BFS algorithm to check connectivity
+
+/**
+ * @brief Checks if the circuit has a ground node and is fully connected.
+ * Throws a runtime_error if the circuit is invalid.
+ */
+void Circuit::checkConnectivity() const {
+    if (components.empty()) {
+        return; // An empty circuit is considered valid, nothing to analyze.
+    }
+
+    set<int> allNodes = getNodes();
+
+    // 1. Check for the existence of a ground node (node 0)
+    if (allNodes.find(0) == allNodes.end()) {
+        throw runtime_error("Error: No ground node (0) detected in the circuit. Analysis requires a ground reference.");
+    }
+
+    // 2. Check for disconnected parts (islands) using Breadth-First Search (BFS)
+    map<int, vector<int>> adjList;
+    for (const auto& comp : components) {
+        int n1 = comp->getNode1();
+        int n2 = comp->getNode2();
+        adjList[n1].push_back(n2);
+        adjList[n2].push_back(n1);
+
+        // Also consider control nodes for connectivity, as they form part of the graph
+        if (auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
+            adjList[vcvs->getCtrlNode1()].push_back(vcvs->getCtrlNode2());
+            adjList[vcvs->getCtrlNode2()].push_back(vcvs->getCtrlNode1());
+        }
+        if (auto vccs = dynamic_cast<const VCCS*>(comp.get())) {
+            adjList[vccs->getCtrlNode1()].push_back(vccs->getCtrlNode2());
+            adjList[vccs->getCtrlNode2()].push_back(vccs->getCtrlNode1());
+        }
+    }
+
+    set<int> visitedNodes;
+    queue<int> q;
+
+    q.push(0); // Start BFS from the ground node
+    visitedNodes.insert(0);
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        if (adjList.count(u)) {
+            for (int v : adjList.at(u)) {
+                if (visitedNodes.find(v) == visitedNodes.end()) {
+                    visitedNodes.insert(v);
+                    q.push(v);
+                }
+            }
+        }
+    }
+
+    if (visitedNodes.size() != allNodes.size()) {
+        string errorMsg = "Error: Circuit is not fully connected. Floating nodes/islands detected. Reachable nodes from ground: ";
+        for(int node : visitedNodes) { errorMsg += to_string(node) + " "; }
+        errorMsg += ". Unreachable nodes: ";
+        for(int node : allNodes) {
+            if(visitedNodes.find(node) == visitedNodes.end()){
+                errorMsg += to_string(node) + " ";
+            }
+        }
+        throw runtime_error(errorMsg);
+    }
+}
+
 
 void Circuit::addComponent(unique_ptr<Component> component) {
     components.push_back(move(component));
@@ -109,13 +179,14 @@ void Circuit::analyzeCircuit() {
             }
         }
     }
+
+    // --- NEWLY ADDED ---
+    // Perform validity checks right before analysis
+    checkConnectivity();
 }
 
 void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars, double Tstart, double Tmaxstep) {
-    for (const auto& comp : components) {
-        comp->resetState();
-    }
-    analyzeCircuit();
+    analyzeCircuit(); // This now includes connectivity checks
     int matrix_size = nodeCount + currentVarCount;
     if (matrix_size == 0) {
         cout << "Circuit is empty. Cannot run analysis." << endl;
@@ -250,79 +321,5 @@ Component* Circuit::findComponent(const string& name) {
 }
 
 void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars) {
-    Component* sweepSource = findComponent(sweepSourceName);
-    if (!sweepSource) {
-        throw runtime_error("Sweep source '" + sweepSourceName + "' not found.");
-    }
-
-    const double h_dc = 1e12; // h -> infinity for DC analysis
-
-    analyzeCircuit();
-    int matrix_size = nodeCount + currentVarCount;
-    if (matrix_size == 0) {
-        cout << "Circuit is empty. Cannot run analysis." << endl;
-        return;
-    }
-
-    vector<int> printIndices;
-    vector<string> printHeaders;
-    printHeaders.push_back(sweepSourceName);
-
-    for (const auto& var : printVars) {
-        if (toupper(var.type) == 'V') {
-            int nodeNum = stoi(var.id);
-            if (nodeNum > 0 && nodeNum <= nodeCount) {
-                printIndices.push_back(nodeNum - 1);
-                printHeaders.push_back("V(" + var.id + ")");
-            }
-        } else if (toupper(var.type) == 'I') {
-            if (currentComponentMap.count(var.id)) {
-                int m_idx = currentComponentMap.at(var.id);
-                printIndices.push_back(nodeCount + m_idx - 1);
-                printHeaders.push_back("I(" + var.id + ")");
-            }
-        }
-    }
-
-    cout << "--- Starting DC Sweep Analysis ---" << endl;
-    for(const auto& header : printHeaders) {
-        cout << left << setw(15) << header;
-    }
-    cout << endl;
-
-    for (double sweepVal = startVal; sweepVal <= endVal; sweepVal += increment) {
-        sweepSource->set_dc_value(sweepVal);
-
-        VectorXd x = VectorXd::Zero(matrix_size);
-        const int MAX_NR_ITER = 100;
-        const double NR_TOLERANCE = 1e-6;
-
-        for (int i = 0; i < MAX_NR_ITER; ++i) {
-            MatrixXd A = MatrixXd::Zero(matrix_size, matrix_size);
-            VectorXd b = VectorXd::Zero(matrix_size);
-            for (const auto& comp : components) {
-                int final_current_idx = -1;
-                if (comp->addsCurrentVariable()) {
-                    final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
-                }
-                comp->stamp(A, b, x, final_current_idx, h_dc, 0.0);
-            }
-            VectorXd x_next = A.colPivHouseholderQr().solve(b);
-            if ((x_next - x).norm() < NR_TOLERANCE) {
-                x = x_next;
-                break;
-            }
-            x = x_next;
-            if (i == MAX_NR_ITER - 1) {
-                cout << "Warning: Newton-Raphson did not converge for sweep value " << sweepVal << endl;
-            }
-        }
-
-        cout << left << setw(15) << fixed << setprecision(6) << sweepVal;
-        for (int idx : printIndices) {
-            cout << setw(15) << fixed << setprecision(6) << x(idx);
-        }
-        cout << endl;
-    }
-    cout << "DC Sweep analysis finished." << endl;
+    analyzeCircuit(); // This
 }
