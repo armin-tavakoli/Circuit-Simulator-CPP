@@ -19,15 +19,14 @@ public:
     bool removeComponent(const string& name);
     bool hasComponent(const string& name) const;
     void printCircuit(char type = 'A') const;
-    void runTransientAnalysis(double endTime, double timeStep, const vector<PrintVariable>& printVars = {});
+
+    // امضای متد برای پذیرش پارامترهای اختیاری Tstart و Tmaxstep به‌روز شده است
+    void runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars = {}, double Tstart = 0.0, double Tmaxstep = 0.0);
+
     void clear();
     set<int> getNodes() const;
     void renameNode(int oldNode, int newNode);
-
-    // متد جدید برای تحلیل DC Sweep
     void runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars);
-
-    // متد عمومی برای پیدا کردن یک المان (برای استفاده در DC Sweep)
     Component* findComponent(const string& name);
 
 private:

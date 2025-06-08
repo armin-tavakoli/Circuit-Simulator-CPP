@@ -111,13 +111,21 @@ void Circuit::analyzeCircuit() {
     }
 }
 
-void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector<PrintVariable>& printVars) {
+void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars, double Tstart, double Tmaxstep) {
     analyzeCircuit();
     int matrix_size = nodeCount + currentVarCount;
     if (matrix_size == 0) {
         cout << "Circuit is empty. Cannot run analysis." << endl;
         return;
     }
+
+    // تعیین گام زمانی واقعی بر اساس Tmaxstep
+    double actual_tstep = Tstep;
+    if (Tmaxstep > 0 && Tmaxstep < Tstep) {
+        actual_tstep = Tmaxstep;
+        cout << "Info: Time step limited by Tmaxstep to " << actual_tstep << "s." << endl;
+    }
+
     bool hasNonLinear = false;
     for (const auto& comp : components) {
         if (comp->isNonLinear()) {
@@ -127,10 +135,12 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
     }
     cout << "--- Starting Transient Analysis ---" << endl;
     if (hasNonLinear) cout << "Non-linear elements detected. Newton-Raphson solver activated." << endl;
+
     vector<int> printIndices;
     vector<string> printHeaders;
     bool printAll = printVars.empty();
     printHeaders.push_back("Time(s)");
+
     if (printAll) {
         for (int i = 1; i <= nodeCount; ++i) printHeaders.push_back("V(" + to_string(i) + ")");
         map<int, string> reverseCurrentMap;
@@ -153,11 +163,14 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
             }
         }
     }
+
     for(const auto& header : printHeaders) cout << left << setw(15) << header;
     cout << endl;
+
     VectorXd x = VectorXd::Zero(matrix_size);
     VectorXd x_prev_t = VectorXd::Zero(matrix_size);
-    for (double t = 0; t <= endTime; t += timeStep) {
+
+    for (double t = 0; t <= Tstop; t += actual_tstep) {
         VectorXd x_nr_guess = x_prev_t;
         if (hasNonLinear) {
             const int MAX_NR_ITER = 100;
@@ -170,7 +183,7 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
                     if (comp->addsCurrentVariable()) {
                         final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
                     }
-                    comp->stamp(A, b, x_nr_guess, final_current_idx, timeStep, t);
+                    comp->stamp(A, b, x_nr_guess, final_current_idx, actual_tstep, t);
                 }
                 VectorXd x_next_nr = A.colPivHouseholderQr().solve(b);
                 if ((x_next_nr - x_nr_guess).norm() < NR_TOLERANCE) {
@@ -190,18 +203,24 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
                 if (comp->addsCurrentVariable()) {
                     final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
                 }
-                comp->stamp(A, b, x_nr_guess, final_current_idx, timeStep, t);
+                comp->stamp(A, b, x_nr_guess, final_current_idx, actual_tstep, t);
             }
             x_nr_guess = A.colPivHouseholderQr().solve(b);
         }
+
         x = x_nr_guess;
-        cout << left << setw(15) << fixed << setprecision(6) << t;
-        if (printAll) {
-            for (int i = 0; i < matrix_size; ++i) cout << setw(15) << fixed << setprecision(6) << x(i);
-        } else {
-            for (int idx : printIndices) cout << setw(15) << fixed << setprecision(6) << x(idx);
+
+        // فقط در صورتی چاپ کن که زمان فعلی بزرگتر یا مساوی Tstart باشد
+        if (t >= Tstart) {
+            cout << left << setw(15) << fixed << setprecision(6) << t;
+            if (printAll) {
+                for (int i = 0; i < matrix_size; ++i) cout << setw(15) << fixed << setprecision(6) << x(i);
+            } else {
+                for (int idx : printIndices) cout << setw(15) << fixed << setprecision(6) << x(idx);
+            }
+            cout << endl;
         }
-        cout << endl;
+
         x_prev_t = x;
         for (auto& comp : components) {
             if (auto cap = dynamic_cast<Capacitor*>(comp.get())) {
@@ -217,7 +236,6 @@ void Circuit::runTransientAnalysis(double endTime, double timeStep, const vector
     }
     cout << "Transient analysis finished." << endl;
 }
-
 
 Component* Circuit::findComponent(const string& name) {
     for (auto& comp : components) {

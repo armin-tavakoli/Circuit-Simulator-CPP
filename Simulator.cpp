@@ -47,7 +47,11 @@ void Simulator::processCommand(const string& command) {
     string cmd = tokens[0];
     transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
 
-    if (cmd == "add") handleAdd(tokens);
+    // دستورات .tran و tran را به print TRAN هدایت می‌کنیم
+    if (cmd == ".tran" || (cmd == "print" && tokens.size() > 1 && tokens[1] == "TRAN")) {
+        handlePrint(tokens);
+    }
+    else if (cmd == "add") handleAdd(tokens);
     else if (cmd == "delete") handleDelete(tokens);
     else if (cmd == "run") handleRun(tokens);
     else if (cmd == "list") handleList(tokens);
@@ -55,7 +59,6 @@ void Simulator::processCommand(const string& command) {
     else if (cmd == "reset") handleReset();
     else if (cmd == "netlist") handleNetlist(tokens);
     else if (cmd == "rename") handleRenameNode(tokens);
-    else if (cmd == "print") handlePrint(tokens);
     else if (cmd == "gnd") handleGnd(tokens);
     else if (cmd == "show") handleShow(tokens);
     else if (cmd == "dc") handleDC(tokens);
@@ -224,18 +227,45 @@ void Simulator::handleRenameNode(const vector<string>& tokens) {
 }
 
 void Simulator::handleRun(const vector<string>& tokens) {
-    if (tokens.size() != 3) throw runtime_error("Usage: run <EndTime> <TimeStep>");
-    double endTime = parseValue(tokens[1]);
-    double timeStep = parseValue(tokens[2]);
-    circuit.runTransientAnalysis(endTime, timeStep, {});
+    if (tokens.size() < 3) throw runtime_error("Usage: run <Tstop> <Tstep> [Tstart] [Tmaxstep]");
+    double Tstop = parseValue(tokens[1]);
+    double Tstep = parseValue(tokens[2]);
+    double Tstart = (tokens.size() > 3) ? parseValue(tokens[3]) : 0.0;
+    double Tmaxstep = (tokens.size() > 4) ? parseValue(tokens[4]) : 0.0;
+    circuit.runTransientAnalysis(Tstop, Tstep, {}, Tstart, Tmaxstep);
 }
 
 void Simulator::handlePrint(const vector<string>& tokens) {
-    if (tokens.size() < 4 || tokens[1] != "TRAN") throw runtime_error("Syntax for print: print TRAN <Tstep> <Tstop> <Var1> ...");
-    double tStep = parseValue(tokens[2]);
-    double tStop = parseValue(tokens[3]);
+    // .tran Tstep Tstop [Tstart] [Tmaxstep] V(1) ...
+    // print TRAN Tstep Tstop [Tstart] [Tmaxstep] V(1) ...
+
+    // پیدا کردن اولین پارامتر زمانی
+    int time_params_start_idx = (tokens[0] == ".tran") ? 1 : 2;
+
+    if (tokens.size() < time_params_start_idx + 2) {
+        throw runtime_error("Syntax error. Not enough parameters for transient analysis.");
+    }
+
+    double Tstep = parseValue(tokens[time_params_start_idx]);
+    double Tstop = parseValue(tokens[time_params_start_idx + 1]);
+
+    // پیدا کردن اندیس شروع متغیرهای چاپ
+    int vars_start_idx = time_params_start_idx + 2;
+
+    double Tstart = 0.0;
+    if (tokens.size() > vars_start_idx && tokens[vars_start_idx][0] != 'V' && tokens[vars_start_idx][0] != 'I') {
+        Tstart = parseValue(tokens[vars_start_idx]);
+        vars_start_idx++;
+    }
+
+    double Tmaxstep = 0.0;
+    if (tokens.size() > vars_start_idx && tokens[vars_start_idx][0] != 'V' && tokens[vars_start_idx][0] != 'I') {
+        Tmaxstep = parseValue(tokens[vars_start_idx]);
+        vars_start_idx++;
+    }
+
     vector<PrintVariable> printVars;
-    for (size_t i = 4; i < tokens.size(); ++i) {
+    for (size_t i = vars_start_idx; i < tokens.size(); ++i) {
         const string& varStr = tokens[i];
         if (varStr.length() < 4) throw runtime_error("Invalid variable format: " + varStr);
         char type = toupper(varStr[0]);
@@ -243,11 +273,11 @@ void Simulator::handlePrint(const vector<string>& tokens) {
         if ((type == 'V' || type == 'I') && varStr[1] == '(' && varStr.back() == ')') {
             printVars.push_back({type, id});
         } else {
-            throw runtime_error("Invalid variable format: " + varStr);
+            throw runtime_error("Invalid variable format: " + varStr + ". Expected V(node) or I(comp).");
         }
     }
-    if (tokens.size() > 4 && printVars.empty()) cout << "Warning: No valid variables found to print." << endl;
-    circuit.runTransientAnalysis(tStop, tStep, printVars);
+
+    circuit.runTransientAnalysis(Tstop, Tstep, printVars, Tstart, Tmaxstep);
 }
 
 void Simulator::handleGnd(const vector<string>& tokens) {
