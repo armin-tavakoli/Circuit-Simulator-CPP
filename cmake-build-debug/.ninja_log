@@ -21,3 +21,6 @@
 23	3950	7711000732420267	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	908e781eb23fbc54
 20	7263	7711000732390353	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	f76e073385c67faf
 7263	7589	7711000804823426	circuit_simulator.exe	a91e3b38c1281f68
+5	961	7711016801161555	CMakeFiles/circuit_simulator.dir/main.cpp.obj	821cac176118ba7f
+8	3724	7711016801201429	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	908e781eb23fbc54
+3724	4040	7711016838357413	circuit_simulator.exe	a91e3b38c1281f68
