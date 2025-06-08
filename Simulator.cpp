@@ -80,6 +80,7 @@ void Simulator::processCommand(const string& command_in) {
     else if (cmd == "gnd") handleGnd(tokens);
     else if (cmd == "show") handleShow(tokens);
     else if (cmd == "dc") handleDC(tokens);
+    else if (cmd == "help") handleHelp();
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
@@ -460,4 +461,54 @@ void Simulator::handleDC(const vector<string>& tokens) {
     }
 
     circuit.runDCSweep(srcName, start, end, incr, printVars);
+}
+// این تابع را به انتهای فایل Simulator.cpp اضافه کنید
+void Simulator::handleHelp() {
+    cout << "--- Circuit Simulator Help ---" << endl;
+    cout << "Available Commands:" << endl << endl;
+
+    cout << "  netlist <filepath>" << endl;
+    cout << "    - Loads a circuit description from a file." << endl;
+    cout << "    - Example: netlist rlc_filter.txt" << endl << endl;
+
+    cout << "  add <CompDefinition>" << endl;
+    cout << "    - Adds a single component to the current circuit." << endl;
+    cout << "    - Example: add R1 1 2 1k" << endl << endl;
+
+    cout << "  delete <CompName>" << endl;
+    cout << "    - Deletes a component by its name." << endl;
+    cout << "    - Example: delete R1" << endl << endl;
+
+    cout << "  list [type]" << endl;
+    cout << "    - Lists all components in the circuit. Can be filtered by type (R, C, V, etc.)." << endl;
+    cout << "    - Example: list or list C" << endl << endl;
+
+    cout << "  dc <Src> <Start> <End> <Incr> <Var1> ... " << endl;
+    cout << "    - Performs a DC sweep analysis." << endl;
+    cout << "    - Example: dc Vs 0 10 0.5 V(2)" << endl << endl;
+
+    cout << "  run <EndTime> <TimeStep>" << endl;
+    cout << "    - Runs a simple transient analysis, printing all variables." << endl;
+    cout << "    - Example: run 1m 1u" << endl << endl;
+
+    cout << "  print TRAN <Tstep> <Tstop> <Var1> ..." << endl;
+    cout << "    - Runs a transient analysis, printing only specified variables." << endl;
+    cout << "    - Example: print TRAN 1u 10m V(2) I(Vin)" << endl << endl;
+
+    cout << "  nodes" << endl;
+    cout << "    - Lists all unique node numbers in the circuit." << endl << endl;
+
+    cout << "  gnd <node_number>" << endl;
+    cout << "    - Connects a specified node to ground (renames it to 0)." << endl;
+    cout << "    - Example: gnd 3" << endl << endl;
+
+    cout << "  show schematics" << endl;
+    cout << "    - Shows available netlist files in the current directory." << endl << endl;
+
+    cout << "  reset" << endl;
+    cout << "    - Clears the current circuit." << endl << endl;
+
+    cout << "  exit" << endl;
+    cout << "    - Exits the simulator." << endl << endl;
+    cout << "-----------------------------" << endl;
 }
