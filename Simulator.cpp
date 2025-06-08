@@ -312,10 +312,8 @@ void Simulator::handlePrint(const vector<string>& tokens) {
 
     vector<PrintVariable> printVars;
 
-    // --- START OF BUG FIX ---
     // This new loop correctly parses tokenized variables like "V", "(", "1", ")"
     while (vars_start_idx < tokens.size()) {
-        // Step 1: Expect 'V' or 'I' as a single character token
         const string& type_token = tokens[vars_start_idx];
         char type;
         if (type_token.length() == 1 && (toupper(type_token[0]) == 'V' || toupper(type_token[0]) == 'I')) {
@@ -324,27 +322,22 @@ void Simulator::handlePrint(const vector<string>& tokens) {
             throw runtime_error("Invalid variable format: '" + type_token + "'. Expected 'V' or 'I' to start a variable specification.");
         }
 
-        // Step 2: Expect '(' as the next token
         if (vars_start_idx + 1 >= tokens.size() || tokens[vars_start_idx + 1] != "(") {
             throw runtime_error("Invalid variable format for '" + type_token + "': Missing '('. Expected V(node) or I(comp).");
         }
 
-        // Step 3: Expect the node/component ID as the next token
         if (vars_start_idx + 2 >= tokens.size()) {
             throw runtime_error("Invalid variable format: Missing node or component ID after '('.");
         }
         const string& id = tokens[vars_start_idx + 2];
 
-        // Step 4: Expect ')' as the final token for the variable
         if (vars_start_idx + 3 >= tokens.size() || tokens[vars_start_idx + 3] != ")") {
             throw runtime_error("Invalid variable format: Missing ')' after ID '" + id + "'.");
         }
 
-        // If all checks passed, add the variable to the list and advance the index by 4
         printVars.push_back({type, id});
         vars_start_idx += 4;
     }
-    // --- END OF BUG FIX ---
 
     circuit.runTransientAnalysis(Tstop, Tstep, printVars, Tstart, Tmaxstep);
 }
@@ -419,7 +412,7 @@ void Simulator::handleShow(const vector<string>& tokens) {
 
 void Simulator::handleDC(const vector<string>& tokens) {
     if (tokens.size() < 5) {
-        throw runtime_error("Syntax error. Usage: DC <SrcName> <Start> <End> <Incr> <Var1> ...");
+        throw runtime_error("Syntax error. Usage: DC <SrcName> <Start> <End> <Incr> [Var1] ...");
     }
     const string& srcName = tokens[1];
     double start = parseValue(tokens[2]);
@@ -429,19 +422,42 @@ void Simulator::handleDC(const vector<string>& tokens) {
     if (incr == 0) throw runtime_error("Increment for DC sweep cannot be zero.");
 
     vector<PrintVariable> printVars;
-    for (size_t i = 5; i < tokens.size(); ++i) {
-        const string& varStr = tokens[i];
-        if (varStr.length() < 4) throw runtime_error("Invalid variable format: " + varStr);
-        char type = toupper(varStr[0]);
-        string id = varStr.substr(2, varStr.length() - 3);
-        if ((type == 'V' || type == 'I') && varStr[1] == '(' && varStr.back() == ')') {
-            printVars.push_back({type, id});
-        } else {
-            throw runtime_error("Invalid variable format: " + varStr);
-        }
-    }
+    size_t vars_start_idx = 5;
 
-    if (tokens.size() > 5 && printVars.empty()) cout << "Warning: No valid variables found to print." << endl;
+    // --- START OF BUG FIX ---
+    // This new loop correctly parses tokenized variables like "V", "(", "1", ")"
+    while (vars_start_idx < tokens.size()) {
+        const string& type_token = tokens[vars_start_idx];
+        char type;
+        if (type_token.length() == 1 && (toupper(type_token[0]) == 'V' || toupper(type_token[0]) == 'I')) {
+            type = toupper(type_token[0]);
+        } else {
+            throw runtime_error("Invalid variable format: '" + type_token + "'. Expected 'V' or 'I' to start a variable specification.");
+        }
+
+        if (vars_start_idx + 1 >= tokens.size() || tokens[vars_start_idx + 1] != "(") {
+            throw runtime_error("Invalid variable format for '" + type_token + "': Missing '('. Expected V(node) or I(comp).");
+        }
+
+        if (vars_start_idx + 2 >= tokens.size()) {
+            throw runtime_error("Invalid variable format: Missing node or component ID after '('.");
+        }
+        const string& id = tokens[vars_start_idx + 2];
+
+        if (vars_start_idx + 3 >= tokens.size() || tokens[vars_start_idx + 3] != ")") {
+            throw runtime_error("Invalid variable format: Missing ')' after ID '" + id + "'.");
+        }
+
+        printVars.push_back({type, id});
+        vars_start_idx += 4;
+    }
+    // --- END OF BUG FIX ---
+
+    if (tokens.size() > 5 && printVars.empty()) {
+        // This check might be misleading now, but we can leave it.
+        // It's hard to distinguish between "no variables provided" and "invalid variable format" without more complex logic.
+        cout << "Warning: No valid variables found to print." << endl;
+    }
 
     circuit.runDCSweep(srcName, start, end, incr, printVars);
 }
