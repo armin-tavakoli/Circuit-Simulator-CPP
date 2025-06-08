@@ -16,6 +16,11 @@ void SinusoidalVoltageSource::print() const {
     cout << "Type: SIN Source, Name: " << name << ", Nodes: (" << node1 << "," << node2
          << "), SIN(" << v_offset << " " << v_amplitude << " " << freq << "Hz)" << endl;
 }
+void PulseVoltageSource::print() const {
+    cout << "Type: PULSE Source, Name: " << name << ", Nodes: (" << node1 << "," << node2
+         << "), PULSE(" << v_initial << " " << v_pulsed << " " << t_delay << " "
+         << t_rise << " " << t_fall << " " << t_pulse_width << " " << t_period << ")" << endl;
+}
 void Diode::print() const {
     cout << "Type: Diode, Name: " << name << ", Nodes: (" << node1 << "," << node2
          << "), Model: " << modelName << endl;
@@ -57,6 +62,8 @@ VCCS::VCCS(const string& name, int n1, int n2, int ctrl_n1, int ctrl_n2, double 
 CCVS::CCVS(const string& name, int n1, int n2, const string& vctrl_name, double gain) : Component(name, n1, n2), ctrlVName(vctrl_name), gain(gain) {}
 CCCS::CCCS(const string& name, int n1, int n2, const string& vctrl_name, double gain) : Component(name, n1, n2), ctrlVName(vctrl_name), gain(gain) {}
 
+PulseVoltageSource::PulseVoltageSource(const string& name, int n1, int n2, double v1, double v2, double td, double tr, double tf, double pw, double per)
+        : VoltageSource(name, n1, n2, v1), v_initial(v1), v_pulsed(v2), t_delay(td), t_rise(tr), t_fall(tf), t_pulse_width(pw), t_period(per) {}
 
 // --- متدهای Stamp ---
 
@@ -124,6 +131,19 @@ void SinusoidalVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_
     if (n2 >= 0) A(current_idx, n2) = -1.0;
     b(current_idx) = instantaneous_voltage;
     // KCL
+    if (n1 >= 0) A(n1, current_idx) = 1.0;
+    if (n2 >= 0) A(n2, current_idx) = -1.0;
+}
+void PulseVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
+    int n1 = node1 - 1;
+    int n2 = node2 - 1;
+
+    double instantaneous_voltage = calculate_voltage_at(t);
+
+    if (n1 >= 0) A(current_idx, n1) = 1.0;
+    if (n2 >= 0) A(current_idx, n2) = -1.0;
+    b(current_idx) = instantaneous_voltage;
+
     if (n1 >= 0) A(n1, current_idx) = 1.0;
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
@@ -233,4 +253,31 @@ void VCVS::updateCtrlNodes(int oldNode, int newNode) {
 void VCCS::updateCtrlNodes(int oldNode, int newNode) {
     if (ctrlNode1 == oldNode) ctrlNode1 = newNode;
     if (ctrlNode2 == oldNode) ctrlNode2 = newNode;
+}
+
+double PulseVoltageSource::calculate_voltage_at(double t) const {
+    // اگر دوره تناوب صفر یا منفی باشد، پالس تکرار نمی‌شود
+    if (t_period <= 0) {
+        if (t <= t_delay) return v_initial;
+        t -= t_delay;
+        if (t <= t_rise) return v_initial + (v_pulsed - v_initial) * t / t_rise;
+        t -= t_rise;
+        if (t <= t_pulse_width) return v_pulsed;
+        t -= t_pulse_width;
+        if (t <= t_fall) return v_pulsed + (v_initial - v_pulsed) * t / t_fall;
+        return v_initial;
+    }
+
+    // مدیریت پالس‌های متناوب
+    t = fmod(t, t_period);
+
+    if (t <= t_delay) return v_initial;
+    t -= t_delay;
+    if (t_rise > 0 && t <= t_rise) return v_initial + (v_pulsed - v_initial) * t / t_rise;
+    t -= t_rise;
+    if (t <= t_pulse_width) return v_pulsed;
+    t -= t_pulse_width;
+    if (t_fall > 0 && t <= t_fall) return v_pulsed + (v_initial - v_pulsed) * t / t_fall;
+
+    return v_initial;
 }

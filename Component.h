@@ -168,5 +168,23 @@ private:
     double gain;
 };
 
+class PulseVoltageSource : public VoltageSource {
+public:
+    PulseVoltageSource(const string& name, int n1, int n2, double v1, double v2, double td, double tr, double tf, double pw, double per);
+    void print() const override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+
+private:
+    double v_initial;
+    double v_pulsed;
+    double t_delay;
+    double t_rise;
+    double t_fall;
+    double t_pulse_width;
+    double t_period;
+
+    // تابع کمکی برای محاسبه ولتاژ لحظه‌ای
+    double calculate_voltage_at(double t) const;
+};
 
 #endif // COMPONENT_H

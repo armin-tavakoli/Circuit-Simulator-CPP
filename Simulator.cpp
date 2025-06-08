@@ -3,23 +3,37 @@
 #include <algorithm>
 #include <set>
 #include <filesystem>
+#include <regex>
 
-Simulator::Simulator() { setupDefaultModels(); }
+/**
+ * @brief سازنده کلاس Simulator.
+ */
+Simulator::Simulator() {
+    setupDefaultModels();
+}
 
+/**
+ * @brief مدل‌های پیش‌فرض دیود را ایجاد می‌کند.
+ */
 void Simulator::setupDefaultModels() {
     DiodeModel standard;
     standard.name = "D";
     diodeModels["D"] = standard;
+
     DiodeModel zener;
     zener.name = "Z";
     zener.Vz = 5.1;
     diodeModels["Z"] = zener;
 }
 
+/**
+ * @brief حلقه اصلی برنامه را اجرا می‌کند.
+ */
 void Simulator::run() {
     string command;
     cout << "Welcome to the Circuit Simulator!" << endl;
-    cout << "Enter commands ('dc...', 'exit')." << endl;
+    cout << "Enter commands ('add Vpulse...', 'exit')." << endl;
+
     while (true) {
         cout << "> ";
         getline(cin, command);
@@ -35,7 +49,14 @@ void Simulator::run() {
     cout << "Simulator terminated." << endl;
 }
 
-void Simulator::processCommand(const string& command) {
+/**
+ * @brief یک دستور ورودی را تجزیه و تابع مربوط به آن را فراخوانی می‌کند.
+ */
+void Simulator::processCommand(const string& command_in) {
+    string command = command_in;
+    command = regex_replace(command, regex("\\("), " ( ");
+    command = regex_replace(command, regex("\\)"), " ) ");
+
     stringstream ss(command);
     string token;
     vector<string> tokens;
@@ -47,11 +68,7 @@ void Simulator::processCommand(const string& command) {
     string cmd = tokens[0];
     transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
 
-    // دستورات .tran و tran را به print TRAN هدایت می‌کنیم
-    if (cmd == ".tran" || (cmd == "print" && tokens.size() > 1 && tokens[1] == "TRAN")) {
-        handlePrint(tokens);
-    }
-    else if (cmd == "add") handleAdd(tokens);
+    if (cmd == "add") handleAdd(tokens);
     else if (cmd == "delete") handleDelete(tokens);
     else if (cmd == "run") handleRun(tokens);
     else if (cmd == "list") handleList(tokens);
@@ -59,20 +76,31 @@ void Simulator::processCommand(const string& command) {
     else if (cmd == "reset") handleReset();
     else if (cmd == "netlist") handleNetlist(tokens);
     else if (cmd == "rename") handleRenameNode(tokens);
+    else if (cmd == "print") handlePrint(tokens);
     else if (cmd == "gnd") handleGnd(tokens);
     else if (cmd == "show") handleShow(tokens);
     else if (cmd == "dc") handleDC(tokens);
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
+/**
+ * @brief تابع کمکی برای افزودن یک المان از روی آرگومان‌های تجزیه شده.
+ */
 void Simulator::addComponentFromTokens(const vector<string>& args) {
     if (args.empty()) return;
+
     const string& name = args[0];
-    if (circuit.hasComponent(name)) throw runtime_error("Component '" + name + "' already exists.");
+    if (circuit.hasComponent(name)) {
+        throw runtime_error("Component '" + name + "' already exists.");
+    }
+
     char compType = toupper(name[0]);
 
     switch (compType) {
-        case 'R': case 'C': case 'L': case 'I': {
+        case 'R':
+        case 'C':
+        case 'L':
+        case 'I': {
             if (args.size() != 4) throw runtime_error("R/C/L/I definition requires 4 arguments.");
             int n1 = stoi(args[1]), n2 = stoi(args[2]);
             double value = parseValue(args[3]);
@@ -86,56 +114,76 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
         case 'V': {
             if (args.size() < 4) throw runtime_error("V source definition requires at least 4 arguments.");
             int n1 = stoi(args[1]), n2 = stoi(args[2]);
-            if (args.size() >= 5 && args[3] == "SIN") {
+
+            string sourceType = (args.size() > 3) ? args[3] : "DC";
+            transform(sourceType.begin(), sourceType.end(), sourceType.begin(), ::toupper);
+
+            if (sourceType == "SIN") {
+                if (args.size() < 8) throw runtime_error("Syntax for SIN: SIN ( Voff Vamp Freq )");
                 auto it_open = find(args.begin(), args.end(), "(");
                 auto it_close = find(args.begin(), args.end(), ")");
-                if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 4) throw runtime_error("Syntax for SIN: SIN ( Voff Vamp Freq )");
-                double v_off = parseValue(*(it_open + 1)), v_amp = parseValue(*(it_open + 2)), freq = parseValue(*(it_open + 3));
+                if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 4) {
+                    throw runtime_error("Syntax error for SIN source. Expected format: SIN ( Voff Vamp Freq )");
+                }
+                double v_off = parseValue(*(it_open + 1));
+                double v_amp = parseValue(*(it_open + 2));
+                double freq = parseValue(*(it_open + 3));
                 circuit.addComponent(make_unique<SinusoidalVoltageSource>(name, n1, n2, v_off, v_amp, freq));
-            } else if (args.size() == 4) {
+            }
+            else if (sourceType == "PULSE") {
+                if (args.size() < 12) throw runtime_error("Syntax for PULSE: PULSE ( V1 V2 Td Tr Tf Pw Per )");
+                auto it_open = find(args.begin(), args.end(), "(");
+                auto it_close = find(args.begin(), args.end(), ")");
+                if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 8) {
+                    throw runtime_error("Syntax error for PULSE source. Expected format: PULSE ( V1 V2 Td Tr Tf Pw Per )");
+                }
+                double v1 = parseValue(*(it_open + 1));
+                double v2 = parseValue(*(it_open + 2));
+                double td = parseValue(*(it_open + 3));
+                double tr = parseValue(*(it_open + 4));
+                double tf = parseValue(*(it_open + 5));
+                double pw = parseValue(*(it_open + 6));
+                double per = parseValue(*(it_open + 7));
+                circuit.addComponent(make_unique<PulseVoltageSource>(name, n1, n2, v1, v2, td, tr, tf, pw, per));
+            }
+            else {
+                if (args.size() != 4) throw runtime_error("DC Voltage source definition requires 4 arguments: V<name> n1 n2 <value>");
                 double value = parseValue(args[3]);
                 circuit.addComponent(make_unique<VoltageSource>(name, n1, n2, value));
-            } else {
-                throw runtime_error("Invalid arguments for V source.");
             }
             break;
         }
-        case 'D': {
-            if (args.size() != 4) throw runtime_error("Diode definition requires: D<name> n1 n2 <model>");
-            int n1 = stoi(args[1]), n2 = stoi(args[2]);
-            const string& modelName = args[3];
-            if (diodeModels.find(modelName) == diodeModels.end()) throw runtime_error("Model <" + modelName + "> not found");
-            circuit.addComponent(make_unique<Diode>(name, n1, n2, diodeModels.at(modelName)));
-            break;
-        }
-        case 'E': {
-            if (args.size() != 6) throw runtime_error("VCVS(E) definition requires: E<name> n+ n- c_n+ c_n- gain");
-            int n1 = stoi(args[1]), n2 = stoi(args[2]), cn1 = stoi(args[3]), cn2 = stoi(args[4]);
-            double gain = parseValue(args[5]);
-            circuit.addComponent(make_unique<VCVS>(name, n1, n2, cn1, cn2, gain));
-            break;
-        }
-        case 'G': {
-            if (args.size() != 6) throw runtime_error("VCCS(G) definition requires: G<name> n+ n- c_n+ c_n- gain");
-            int n1 = stoi(args[1]), n2 = stoi(args[2]), cn1 = stoi(args[3]), cn2 = stoi(args[4]);
-            double gain = parseValue(args[5]);
-            circuit.addComponent(make_unique<VCCS>(name, n1, n2, cn1, cn2, gain));
-            break;
-        }
-        case 'H': {
-            if (args.size() != 5) throw runtime_error("CCVS(H) definition requires: H<name> n+ n- v_ctrl gain");
-            int n1 = stoi(args[1]), n2 = stoi(args[2]);
-            const string& vctrl_name = args[3];
-            double gain = parseValue(args[4]);
-            circuit.addComponent(make_unique<CCVS>(name, n1, n2, vctrl_name, gain));
-            break;
-        }
-        case 'F': {
-            if (args.size() != 5) throw runtime_error("CCCS(F) definition requires: F<name> n+ n- v_ctrl gain");
-            int n1 = stoi(args[1]), n2 = stoi(args[2]);
-            const string& vctrl_name = args[3];
-            double gain = parseValue(args[4]);
-            circuit.addComponent(make_unique<CCCS>(name, n1, n2, vctrl_name, gain));
+        case 'D': case 'E': case 'G': case 'H': case 'F': {
+            if (args.size() < 5) throw runtime_error("Dependent source definitions require at least 5 arguments.");
+            if (compType == 'D') {
+                if (args.size() != 4) throw runtime_error("Diode definition requires: D<name> n1 n2 <model>");
+                int n1 = stoi(args[1]), n2 = stoi(args[2]);
+                const string& modelName = args[3];
+                if (diodeModels.find(modelName) == diodeModels.end()) throw runtime_error("Model <" + modelName + "> not found");
+                circuit.addComponent(make_unique<Diode>(name, n1, n2, diodeModels.at(modelName)));
+            } else if (compType == 'E') {
+                if (args.size() != 6) throw runtime_error("VCVS(E) requires: E<name> n+ n- c_n+ c_n- gain");
+                int n1 = stoi(args[1]), n2 = stoi(args[2]), cn1 = stoi(args[3]), cn2 = stoi(args[4]);
+                double gain = parseValue(args[5]);
+                circuit.addComponent(make_unique<VCVS>(name, n1, n2, cn1, cn2, gain));
+            } else if (compType == 'G') {
+                if (args.size() != 6) throw runtime_error("VCCS(G) requires: G<name> n+ n- c_n+ c_n- gain");
+                int n1 = stoi(args[1]), n2 = stoi(args[2]), cn1 = stoi(args[3]), cn2 = stoi(args[4]);
+                double gain = parseValue(args[5]);
+                circuit.addComponent(make_unique<VCCS>(name, n1, n2, cn1, cn2, gain));
+            } else if (compType == 'H') {
+                if (args.size() != 5) throw runtime_error("CCVS(H) requires: H<name> n+ n- v_ctrl gain");
+                int n1 = stoi(args[1]), n2 = stoi(args[2]);
+                const string& vctrl_name = args[3];
+                double gain = parseValue(args[4]);
+                circuit.addComponent(make_unique<CCVS>(name, n1, n2, vctrl_name, gain));
+            } else if (compType == 'F') {
+                if (args.size() != 5) throw runtime_error("CCCS(F) requires: F<name> n+ n- v_ctrl gain");
+                int n1 = stoi(args[1]), n2 = stoi(args[2]);
+                const string& vctrl_name = args[3];
+                double gain = parseValue(args[4]);
+                circuit.addComponent(make_unique<CCCS>(name, n1, n2, vctrl_name, gain));
+            }
             break;
         }
         default: {
@@ -163,6 +211,8 @@ void Simulator::handleNetlist(const vector<string>& tokens) {
     while (getline(file, line)) {
         line_num++;
         if (line.empty() || line[0] == '*') continue;
+        line = regex_replace(line, regex("\\("), " ( ");
+        line = regex_replace(line, regex("\\)"), " ) ");
         stringstream ss(line);
         string token;
         vector<string> args;
@@ -236,49 +286,69 @@ void Simulator::handleRun(const vector<string>& tokens) {
 }
 
 void Simulator::handlePrint(const vector<string>& tokens) {
-    // .tran Tstep Tstop [Tstart] [Tmaxstep] V(1) ...
-    // print TRAN Tstep Tstop [Tstart] [Tmaxstep] V(1) ...
+    string first_token = (tokens.size() > 1) ? tokens[1] : "";
+    transform(first_token.begin(), first_token.end(), first_token.begin(), ::toupper);
 
-    // پیدا کردن اولین پارامتر زمانی
-    int time_params_start_idx = (tokens[0] == ".tran") ? 1 : 2;
-
-    if (tokens.size() < time_params_start_idx + 2) {
-        throw runtime_error("Syntax error. Not enough parameters for transient analysis.");
+    if (tokens.size() < 3 || first_token != "TRAN") {
+        throw runtime_error("Syntax error. Expected: print TRAN <Tstep> <Tstop> ...");
     }
 
-    double Tstep = parseValue(tokens[time_params_start_idx]);
-    double Tstop = parseValue(tokens[time_params_start_idx + 1]);
+    double Tstep = parseValue(tokens[2]);
+    double Tstop = parseValue(tokens[3]);
 
-    // پیدا کردن اندیس شروع متغیرهای چاپ
-    int vars_start_idx = time_params_start_idx + 2;
-
+    size_t vars_start_idx = 4;
     double Tstart = 0.0;
-    if (tokens.size() > vars_start_idx && tokens[vars_start_idx][0] != 'V' && tokens[vars_start_idx][0] != 'I') {
+    double Tmaxstep = 0.0;
+
+    // Logic to parse optional Tstart and Tmaxstep parameters
+    if (vars_start_idx < tokens.size() && (tokens[vars_start_idx].find_first_of("vViI") != 0)) {
         Tstart = parseValue(tokens[vars_start_idx]);
         vars_start_idx++;
     }
-
-    double Tmaxstep = 0.0;
-    if (tokens.size() > vars_start_idx && tokens[vars_start_idx][0] != 'V' && tokens[vars_start_idx][0] != 'I') {
+    if (vars_start_idx < tokens.size() && (tokens[vars_start_idx].find_first_of("vViI") != 0)) {
         Tmaxstep = parseValue(tokens[vars_start_idx]);
         vars_start_idx++;
     }
 
     vector<PrintVariable> printVars;
-    for (size_t i = vars_start_idx; i < tokens.size(); ++i) {
-        const string& varStr = tokens[i];
-        if (varStr.length() < 4) throw runtime_error("Invalid variable format: " + varStr);
-        char type = toupper(varStr[0]);
-        string id = varStr.substr(2, varStr.length() - 3);
-        if ((type == 'V' || type == 'I') && varStr[1] == '(' && varStr.back() == ')') {
-            printVars.push_back({type, id});
+
+    // --- START OF BUG FIX ---
+    // This new loop correctly parses tokenized variables like "V", "(", "1", ")"
+    while (vars_start_idx < tokens.size()) {
+        // Step 1: Expect 'V' or 'I' as a single character token
+        const string& type_token = tokens[vars_start_idx];
+        char type;
+        if (type_token.length() == 1 && (toupper(type_token[0]) == 'V' || toupper(type_token[0]) == 'I')) {
+            type = toupper(type_token[0]);
         } else {
-            throw runtime_error("Invalid variable format: " + varStr + ". Expected V(node) or I(comp).");
+            throw runtime_error("Invalid variable format: '" + type_token + "'. Expected 'V' or 'I' to start a variable specification.");
         }
+
+        // Step 2: Expect '(' as the next token
+        if (vars_start_idx + 1 >= tokens.size() || tokens[vars_start_idx + 1] != "(") {
+            throw runtime_error("Invalid variable format for '" + type_token + "': Missing '('. Expected V(node) or I(comp).");
+        }
+
+        // Step 3: Expect the node/component ID as the next token
+        if (vars_start_idx + 2 >= tokens.size()) {
+            throw runtime_error("Invalid variable format: Missing node or component ID after '('.");
+        }
+        const string& id = tokens[vars_start_idx + 2];
+
+        // Step 4: Expect ')' as the final token for the variable
+        if (vars_start_idx + 3 >= tokens.size() || tokens[vars_start_idx + 3] != ")") {
+            throw runtime_error("Invalid variable format: Missing ')' after ID '" + id + "'.");
+        }
+
+        // If all checks passed, add the variable to the list and advance the index by 4
+        printVars.push_back({type, id});
+        vars_start_idx += 4;
     }
+    // --- END OF BUG FIX ---
 
     circuit.runTransientAnalysis(Tstop, Tstep, printVars, Tstart, Tmaxstep);
 }
+
 
 void Simulator::handleGnd(const vector<string>& tokens) {
     if (tokens.size() != 2) {
