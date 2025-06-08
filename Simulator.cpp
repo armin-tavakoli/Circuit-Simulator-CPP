@@ -4,36 +4,22 @@
 #include <set>
 #include <filesystem>
 
-/**
- * @brief سازنده کلاس Simulator.
- * مدل‌های پیش‌فرض دیود را در اینجا مقداردهی اولیه می‌کند.
- */
-Simulator::Simulator() {
-    setupDefaultModels();
-}
+Simulator::Simulator() { setupDefaultModels(); }
 
-/**
- * @brief مدل‌های پیش‌فرض دیود را ایجاد و در نقشه مدل‌ها ذخیره می‌کند.
- */
 void Simulator::setupDefaultModels() {
     DiodeModel standard;
     standard.name = "D";
     diodeModels["D"] = standard;
-
     DiodeModel zener;
     zener.name = "Z";
     zener.Vz = 5.1;
     diodeModels["Z"] = zener;
 }
 
-/**
- * @brief حلقه اصلی برنامه را اجرا می‌کند که منتظر دستورات کاربر می‌ماند.
- */
 void Simulator::run() {
     string command;
     cout << "Welcome to the Circuit Simulator!" << endl;
-    cout << "Enter commands ('show schematics', 'exit')." << endl;
-
+    cout << "Enter commands ('dc...', 'exit')." << endl;
     while (true) {
         cout << "> ";
         getline(cin, command);
@@ -49,9 +35,6 @@ void Simulator::run() {
     cout << "Simulator terminated." << endl;
 }
 
-/**
- * @brief یک دستور ورودی را تجزیه و تابع مربوط به آن را فراخوانی می‌کند.
- */
 void Simulator::processCommand(const string& command) {
     stringstream ss(command);
     string token;
@@ -75,29 +58,22 @@ void Simulator::processCommand(const string& command) {
     else if (cmd == "print") handlePrint(tokens);
     else if (cmd == "gnd") handleGnd(tokens);
     else if (cmd == "show") handleShow(tokens);
+    else if (cmd == "dc") handleDC(tokens);
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
-/**
- * @brief تابع کمکی برای افزودن یک المان از روی آرگومان‌های تجزیه شده.
- */
 void Simulator::addComponentFromTokens(const vector<string>& args) {
     if (args.empty()) return;
-
     const string& name = args[0];
-    if (circuit.hasComponent(name)) {
-        throw runtime_error("Component '" + name + "' already exists.");
-    }
-
+    if (circuit.hasComponent(name)) throw runtime_error("Component '" + name + "' already exists.");
     char compType = toupper(name[0]);
 
     switch (compType) {
         case 'R': case 'C': case 'L': case 'I': {
-            if (args.size() != 4) throw runtime_error("R/C/L/I definition requires exactly 4 arguments.");
-            int n1 = stoi(args[1]);
-            int n2 = stoi(args[2]);
+            if (args.size() != 4) throw runtime_error("R/C/L/I definition requires 4 arguments.");
+            int n1 = stoi(args[1]), n2 = stoi(args[2]);
             double value = parseValue(args[3]);
-            if (value <= 0 && compType != 'I') throw runtime_error("Value for R, C, L must be positive.");
+            if (value <= 0 && compType != 'I') throw runtime_error("Value for R/C/L must be positive.");
             if (compType == 'R') circuit.addComponent(make_unique<Resistor>(name, n1, n2, value));
             else if (compType == 'C') circuit.addComponent(make_unique<Capacitor>(name, n1, n2, value));
             else if (compType == 'L') circuit.addComponent(make_unique<Inductor>(name, n1, n2, value));
@@ -106,17 +82,12 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
         }
         case 'V': {
             if (args.size() < 4) throw runtime_error("V source definition requires at least 4 arguments.");
-            int n1 = stoi(args[1]);
-            int n2 = stoi(args[2]);
+            int n1 = stoi(args[1]), n2 = stoi(args[2]);
             if (args.size() >= 5 && args[3] == "SIN") {
                 auto it_open = find(args.begin(), args.end(), "(");
                 auto it_close = find(args.begin(), args.end(), ")");
-                if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 4) {
-                    throw runtime_error("Syntax error for SIN source. Expected format: SIN ( Voff Vamp Freq )");
-                }
-                double v_off = parseValue(*(it_open + 1));
-                double v_amp = parseValue(*(it_open + 2));
-                double freq = parseValue(*(it_open + 3));
+                if (it_open == args.end() || it_close == args.end() || distance(it_open, it_close) != 4) throw runtime_error("Syntax for SIN: SIN ( Voff Vamp Freq )");
+                double v_off = parseValue(*(it_open + 1)), v_amp = parseValue(*(it_open + 2)), freq = parseValue(*(it_open + 3));
                 circuit.addComponent(make_unique<SinusoidalVoltageSource>(name, n1, n2, v_off, v_amp, freq));
             } else if (args.size() == 4) {
                 double value = parseValue(args[3]);
@@ -149,7 +120,7 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             break;
         }
         case 'H': {
-            if (args.size() != 5) throw runtime_error("CCVS(H) definition requires: H<name> n+ n- v_ctrl_name gain");
+            if (args.size() != 5) throw runtime_error("CCVS(H) definition requires: H<name> n+ n- v_ctrl gain");
             int n1 = stoi(args[1]), n2 = stoi(args[2]);
             const string& vctrl_name = args[3];
             double gain = parseValue(args[4]);
@@ -157,7 +128,7 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             break;
         }
         case 'F': {
-            if (args.size() != 5) throw runtime_error("CCCS(F) definition requires: F<name> n+ n- v_ctrl_name gain");
+            if (args.size() != 5) throw runtime_error("CCCS(F) definition requires: F<name> n+ n- v_ctrl gain");
             int n1 = stoi(args[1]), n2 = stoi(args[2]);
             const string& vctrl_name = args[3];
             double gain = parseValue(args[4]);
@@ -260,9 +231,7 @@ void Simulator::handleRun(const vector<string>& tokens) {
 }
 
 void Simulator::handlePrint(const vector<string>& tokens) {
-    if (tokens.size() < 4 || tokens[1] != "TRAN") {
-        throw runtime_error("Syntax error. Usage: print TRAN <Tstep> <Tstop> <Var1> <Var2> ...");
-    }
+    if (tokens.size() < 4 || tokens[1] != "TRAN") throw runtime_error("Syntax for print: print TRAN <Tstep> <Tstop> <Var1> ...");
     double tStep = parseValue(tokens[2]);
     double tStop = parseValue(tokens[3]);
     vector<PrintVariable> printVars;
@@ -274,12 +243,10 @@ void Simulator::handlePrint(const vector<string>& tokens) {
         if ((type == 'V' || type == 'I') && varStr[1] == '(' && varStr.back() == ')') {
             printVars.push_back({type, id});
         } else {
-            throw runtime_error("Invalid variable format: " + varStr + ". Expected V(node) or I(comp).");
+            throw runtime_error("Invalid variable format: " + varStr);
         }
     }
-    if (tokens.size() > 4 && printVars.empty()){
-        cout << "Warning: No valid variables found to print." << endl;
-    }
+    if (tokens.size() > 4 && printVars.empty()) cout << "Warning: No valid variables found to print." << endl;
     circuit.runTransientAnalysis(tStop, tStep, printVars);
 }
 
@@ -348,4 +315,33 @@ void Simulator::handleShow(const vector<string>& tokens) {
             cerr << "Error: Invalid input. Please enter a number or 'return'." << endl;
         }
     }
+}
+
+void Simulator::handleDC(const vector<string>& tokens) {
+    if (tokens.size() < 5) {
+        throw runtime_error("Syntax error. Usage: DC <SrcName> <Start> <End> <Incr> <Var1> ...");
+    }
+    const string& srcName = tokens[1];
+    double start = parseValue(tokens[2]);
+    double end = parseValue(tokens[3]);
+    double incr = parseValue(tokens[4]);
+
+    if (incr == 0) throw runtime_error("Increment for DC sweep cannot be zero.");
+
+    vector<PrintVariable> printVars;
+    for (size_t i = 5; i < tokens.size(); ++i) {
+        const string& varStr = tokens[i];
+        if (varStr.length() < 4) throw runtime_error("Invalid variable format: " + varStr);
+        char type = toupper(varStr[0]);
+        string id = varStr.substr(2, varStr.length() - 3);
+        if ((type == 'V' || type == 'I') && varStr[1] == '(' && varStr.back() == ')') {
+            printVars.push_back({type, id});
+        } else {
+            throw runtime_error("Invalid variable format: " + varStr);
+        }
+    }
+
+    if (tokens.size() > 5 && printVars.empty()) cout << "Warning: No valid variables found to print." << endl;
+
+    circuit.runDCSweep(srcName, start, end, incr, printVars);
 }

@@ -26,6 +26,10 @@ public:
     void setCtrlCurrentIdx(int idx) { ctrlCurrentIdx = idx; }
     virtual string getCtrlVName() const { return ""; }
 
+    // متدهای جدید برای DC Sweep
+    virtual void set_dc_value(double val) {}
+    virtual double get_dc_value() const { return 0.0; }
+
 protected:
     string name;
     int node1;
@@ -59,6 +63,8 @@ public:
     void print() const override;
     virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool addsCurrentVariable() const override { return true; }
+    void set_dc_value(double val) override { voltage = val; }
+    double get_dc_value() const override { return voltage; }
 protected:
     double voltage;
 };
@@ -68,6 +74,8 @@ public:
     CurrentSource(const string& name, int n1, int n2, double current);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void set_dc_value(double val) override { current = val; }
+    double get_dc_value() const override { return current; }
 private:
     double current;
 };
