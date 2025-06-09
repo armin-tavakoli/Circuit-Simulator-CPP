@@ -32,7 +32,7 @@ void Simulator::setupDefaultModels() {
 void Simulator::run() {
     string command;
     cout << "Welcome to the Circuit Simulator!" << endl;
-    cout << "Enter commands ('add Vpulse...', 'exit')." << endl;
+    cout << "Enter commands or type help." << endl;
 
     while (true) {
         cout << "> ";
@@ -375,8 +375,9 @@ void Simulator::handleShow(const vector<string>& tokens) {
     vector<string> schematicFiles;
     cout << "Searching for schematics in current directory..." << endl;
     for (const auto& entry : filesystem::directory_iterator(path)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".txt") {
-            schematicFiles.push_back(entry.path().filename().string());
+        string filename = entry.path().filename().string();
+        if (entry.is_regular_file() && entry.path().extension() == ".txt" && filename != "CMakeLists.txt") {
+            schematicFiles.push_back(filename);
         }
     }
     if (schematicFiles.empty()) {
@@ -473,7 +474,12 @@ void Simulator::handleHelp() {
 
     cout << "  add <CompDefinition>" << endl;
     cout << "    - Adds a single component to the current circuit." << endl;
-    cout << "    - Example: add R1 1 2 1k" << endl << endl;
+    cout << "    - Basic Example: add R1 1 2 1k" << endl;
+    cout << "    - Dependent Sources Examples:" << endl;
+    cout << "      - add E1 3 4 1 2 2.5    (VCVS: E<name> n+ n- cn+ cn- gain)" << endl;
+    cout << "      - add G1 5 0 1 2 0.1    (VCCS: G<name> n+ n- cn+ cn- gain)" << endl;
+    cout << "      - add H1 4 0 Vdummy 50  (CCVS: H<name> n+ n- v_ctrl gain)" << endl;
+    cout << "      - add F1 5 2 Vmeas 100 (CCCS: F<name> n+ n- v_ctrl gain)" << endl << endl;
 
     cout << "  delete <CompName>" << endl;
     cout << "    - Deletes a component by its name." << endl;
