@@ -23,6 +23,7 @@ public:
     void clear();
     set<int> getNodes() const;
     void renameNode(int oldNode, int newNode);
+    const vector<unique_ptr<Component>>& getComponents() const;
     void runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars);
     Component* findComponent(const string& name);
 

@@ -243,6 +243,62 @@ double PulseVoltageSource::calculate_voltage_at(double t) const {
     if (t <= t_pulse_width) return v_pulsed;
     t -= t_pulse_width;
     if (t_fall > 0 && t <= t_fall) return v_pulsed + (v_initial - v_pulsed) * t / t_fall;
-
     return v_initial;
+}
+string Resistor::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(resistance);
+}
+
+string Capacitor::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(capacitance);
+}
+
+string VoltageSource::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(voltage);
+}
+
+string CurrentSource::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(current);
+}
+
+string Inductor::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(inductance);
+}
+
+string SinusoidalVoltageSource::toNetlistString() const {
+    stringstream ss;
+    ss << name << " " << node1 << " " << node2 << " SIN ( " << v_offset << " " << v_amplitude << " " << freq << " )";
+    return ss.str();
+}
+
+string Diode::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + modelName;
+}
+
+string VCVS::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(ctrlNode1) + " " + to_string(ctrlNode2) + " " + to_string(gain);
+}
+
+string VCCS::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(ctrlNode1) + " " + to_string(ctrlNode2) + " " + to_string(gain);
+}
+
+string CCVS::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + ctrlVName + " " + to_string(gain);
+}
+
+string CCCS::toNetlistString() const {
+    return name + " " + to_string(node1) + " " + to_string(node2) + " " + ctrlVName + " " + to_string(gain);
+}
+string PulseVoltageSource::toNetlistString() const {
+    stringstream ss;
+    ss << name << " " << node1 << " " << node2 << " PULSE ( "
+       << v_initial      << " "
+       << v_pulsed       << " "
+       << t_delay        << " "
+       << t_rise         << " "
+       << t_fall         << " "
+       << t_pulse_width  << " "
+       << t_period       << " )";
+    return ss.str();
 }

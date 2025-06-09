@@ -36,6 +36,7 @@ private:
     void handleShow(const vector<string>& tokens);
     void handleDC(const vector<string>& tokens);
     void handleHelp();
+    void handleSave(const vector<string>& tokens);
 
     void addComponentFromTokens(const vector<string>& args);
 

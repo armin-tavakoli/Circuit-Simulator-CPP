@@ -386,3 +386,6 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
     }
     cout << "DC Sweep analysis finished." << endl;
 }
+const vector<unique_ptr<Component>>& Circuit::getComponents() const {
+    return components;
+}

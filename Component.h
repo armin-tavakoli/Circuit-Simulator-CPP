@@ -14,6 +14,7 @@ class Component {
 public:
     Component(const string& name, int n1, int n2) : name(name), node1(n1), node2(n2), ctrlCurrentIdx(-1) {}
     virtual ~Component() = default;
+    virtual string toNetlistString() const = 0;
     virtual void print() const = 0;
     virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) = 0;
     virtual bool addsCurrentVariable() const { return false; }
@@ -39,6 +40,7 @@ public:
     Resistor(const string& name, int n1, int n2, double res);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    string toNetlistString() const override;
 private:
     double resistance;
 };
@@ -50,6 +52,7 @@ public:
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     void updateVoltage(double new_voltage) { prev_voltage = new_voltage; }
     void resetState() override { prev_voltage = 0.0; }
+    string toNetlistString() const override;
 private:
     double capacitance;
     double prev_voltage;
@@ -63,6 +66,7 @@ public:
     bool addsCurrentVariable() const override { return true; }
     void set_dc_value(double val) override { voltage = val; }
     double get_dc_value() const override { return voltage; }
+    string toNetlistString() const override;
 protected:
     double voltage;
 };
@@ -74,6 +78,7 @@ public:
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     void set_dc_value(double val) override { current = val; }
     double get_dc_value() const override { return current; }
+    string toNetlistString() const override;
 private:
     double current;
 };
@@ -86,6 +91,7 @@ public:
     bool addsCurrentVariable() const override { return true; }
     void updateCurrent(double new_current) { prev_current = new_current; }
     void resetState() override { prev_current = 0.0; }
+    string toNetlistString() const override;
 private:
     double inductance;
     double prev_current;
@@ -96,6 +102,7 @@ public:
     SinusoidalVoltageSource(const string& name, int n1, int n2, double offset, double amplitude, double frequency);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    string toNetlistString() const override;
 private:
     double v_offset;
     double v_amplitude;
@@ -108,6 +115,7 @@ public:
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool isNonLinear() const override { return true; }
+    string toNetlistString() const override;
 private:
     string modelName;
     double Is;
@@ -125,6 +133,7 @@ public:
     int getCtrlNode1() const { return ctrlNode1; }
     int getCtrlNode2() const { return ctrlNode2; }
     void updateCtrlNodes(int oldNode, int newNode);
+    string toNetlistString() const override;
 private:
     int ctrlNode1;
     int ctrlNode2;
@@ -139,6 +148,7 @@ public:
     int getCtrlNode1() const { return ctrlNode1; }
     int getCtrlNode2() const { return ctrlNode2; }
     void updateCtrlNodes(int oldNode, int newNode);
+    string toNetlistString() const override;
 private:
     int ctrlNode1, ctrlNode2;
     double gain;
@@ -151,6 +161,7 @@ public:
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     bool addsCurrentVariable() const override { return true; }
     string getCtrlVName() const override { return ctrlVName; }
+    string toNetlistString() const override;
 private:
     string ctrlVName;
     double gain;
@@ -162,6 +173,7 @@ public:
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     string getCtrlVName() const override { return ctrlVName; }
+    string toNetlistString() const override;
 private:
     string ctrlVName;
     double gain;
@@ -172,7 +184,7 @@ public:
     PulseVoltageSource(const string& name, int n1, int n2, double v1, double v2, double td, double tr, double tf, double pw, double per);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
-
+    string toNetlistString() const override;
 private:
     double v_initial;
     double v_pulsed;

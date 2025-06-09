@@ -1,6 +1,8 @@
 # ninja log v6
-9	2759	7712068033084492	CMakeFiles/circuit_simulator.dir/main.cpp.obj	821cac176118ba7f
-69	2820	7712068033682885	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	a36b11f56ee7b2f3
-70	5871	7712068033692388	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	908e781eb23fbc54
-67	9463	7712068033663563	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	f76e073385c67faf
+17	1708	7712112578915268	CMakeFiles/circuit_simulator.dir/main.cpp.obj	821cac176118ba7f
+24	1643	7712112578994984	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	a36b11f56ee7b2f3
+27	5089	7712112579024892	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	908e781eb23fbc54
+21	9089	7712112578965091	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	f76e073385c67faf
 9463	10143	7712068127615993	circuit_simulator.exe	a91e3b38c1281f68
+11	1423	7712115834942550	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	a36b11f56ee7b2f3
+1424	1916	7712115849075292	circuit_simulator.exe	a91e3b38c1281f68

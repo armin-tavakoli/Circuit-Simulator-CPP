@@ -69,6 +69,7 @@ void Simulator::processCommand(const string& command_in) {
     else if (cmd == "show") handleShow(tokens);
     else if (cmd == "dc") handleDC(tokens);
     else if (cmd == "help") handleHelp();
+    else if (cmd == "save") handleSave(tokens);
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
@@ -464,6 +465,8 @@ void Simulator::handleHelp() {
     cout << "      - add H1 4 0 Vdummy 50  (CCVS: H<name> n+ n- v_ctrl gain)" << endl;
     cout << "      - add F1 5 2 Vmeas 100 (CCCS: F<name> n+ n- v_ctrl gain)" << endl << endl;
 
+
+
     cout << "  delete <CompName>" << endl;
     cout << "    - Deletes a component by its name." << endl;
     cout << "    - Example: delete R1" << endl << endl;
@@ -495,10 +498,43 @@ void Simulator::handleHelp() {
     cout << "  show schematics" << endl;
     cout << "    - Shows available netlist files in the current directory." << endl << endl;
 
+    cout << "  save <filename.txt>" << endl;
+    cout << "    - Saves the current manually built circuit to a netlist file." << endl << endl;
+
+
     cout << "  reset" << endl;
     cout << "    - Clears the current circuit." << endl << endl;
 
     cout << "  exit" << endl;
     cout << "    - Exits the simulator." << endl << endl;
     cout << "-----------------------------" << endl;
+}
+void Simulator::handleSave(const vector<string>& tokens) {
+    if (tokens.size() != 2) {
+        throw runtime_error("Syntax: save <filepath.txt>");
+    }
+
+    string filename = tokens[1];
+    // یک بررسی ساده برای اطمینان از فرمت txt
+    if (filename.rfind(".txt") == string::npos || filename.rfind(".txt") != filename.length() - 4) {
+        filename += ".txt";
+    }
+
+    ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        throw runtime_error("Error: Could not open file for writing: " + filename);
+    }
+
+    const auto& components = circuit.getComponents();
+    if (components.empty()) {
+        cout << "Circuit is empty. Nothing to save." << endl;
+        return;
+    }
+
+    for (const auto& comp : components) {
+        outFile << comp->toNetlistString() << endl;
+    }
+
+    outFile.close();
+    cout << "Circuit successfully saved to " << filename << endl;
 }
