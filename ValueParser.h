@@ -52,4 +52,4 @@ inline double parseValue(string valStr) {
     return baseVal * multiplier;
 }
 
-#endif //VALUEPARSER_H
+#endif

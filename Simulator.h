@@ -45,4 +45,4 @@ private:
     Circuit circuit;
 };
 
-#endif //SIMULATOR_H
+#endif 

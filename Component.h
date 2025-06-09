@@ -23,14 +23,10 @@ public:
     int getNode1() const { return node1; }
     int getNode2() const { return node2; }
     void updateNode(int oldNode, int newNode);
-
     void setCtrlCurrentIdx(int idx) { ctrlCurrentIdx = idx; }
     virtual string getCtrlVName() const { return ""; }
-
-    // متدهای جدید برای DC Sweep
     virtual void set_dc_value(double val) {}
     virtual double get_dc_value() const { return 0.0; }
-
 protected:
     string name;
     int node1;
@@ -185,9 +181,7 @@ private:
     double t_fall;
     double t_pulse_width;
     double t_period;
-
-    // تابع کمکی برای محاسبه ولتاژ لحظه‌ای
     double calculate_voltage_at(double t) const;
 };
 
-#endif // COMPONENT_H
+#endif

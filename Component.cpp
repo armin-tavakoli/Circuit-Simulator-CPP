@@ -6,7 +6,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-// --- متدهای چاپ ---
 void Resistor::print() const { cout << "Type: Resistor, Name: " << name << ", Nodes: (" << node1 << "," << node2 << "), R=" << resistance << " Ohms" << endl; }
 void Capacitor::print() const { cout << "Type: Capacitor, Name: " << name << ", Nodes: (" << node1 << "," << node2 << "), C=" << capacitance << " F" << endl; }
 void VoltageSource::print() const { cout << "Type: DC Source, Name: " << name << ", Nodes: (" << node1 << "," << node2 << "), V=" << voltage << " V" << endl; }
@@ -42,8 +41,6 @@ void CCCS::print() const {
          << "), Control Current: I(" << ctrlVName << "), Gain=" << gain << endl;
 }
 
-
-// --- متدهای سازنده ---
 Resistor::Resistor(const string& name, int n1, int n2, double res) : Component(name, n1, n2), resistance(res) {}
 Capacitor::Capacitor(const string& name, int n1, int n2, double cap) : Component(name, n1, n2), capacitance(cap), prev_voltage(0.0) {}
 VoltageSource::VoltageSource(const string& name, int n1, int n2, double vol) : Component(name, n1, n2), voltage(vol) {}
@@ -64,9 +61,6 @@ CCCS::CCCS(const string& name, int n1, int n2, const string& vctrl_name, double 
 
 PulseVoltageSource::PulseVoltageSource(const string& name, int n1, int n2, double v1, double v2, double td, double tr, double tf, double pw, double per)
         : VoltageSource(name, n1, n2, v1), v_initial(v1), v_pulsed(v2), t_delay(td), t_rise(tr), t_fall(tf), t_pulse_width(pw), t_period(per) {}
-
-// --- متدهای Stamp ---
-
 void Resistor::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     double g = 1.0 / resistance;
     int n1 = node1 - 1;
@@ -88,16 +82,12 @@ void Capacitor::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int c
     if (n2 >= 0) b(n2) -= I_eq;
 }
 
-// **نسخه اصلاح شده**
 void VoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = node1 - 1;
     int n2 = node2 - 1;
-    // KVL: V(n1) - V(n2) = V
     if (n1 >= 0) A(current_idx, n1) = 1.0;
     if (n2 >= 0) A(current_idx, n2) = -1.0;
     b(current_idx) = this->voltage;
-
-    // KCL: جریان از گره مثبت خارج و به گره منفی وارد می‌شود
     if (n1 >= 0) A(n1, current_idx) = 1.0;
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
@@ -121,16 +111,13 @@ void Inductor::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int cu
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
 
-// **نسخه اصلاح شده**
 void SinusoidalVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = node1 - 1;
     int n2 = node2 - 1;
     double instantaneous_voltage = v_offset + v_amplitude * sin(2 * M_PI * freq * t);
-    // KVL
     if (n1 >= 0) A(current_idx, n1) = 1.0;
     if (n2 >= 0) A(current_idx, n2) = -1.0;
     b(current_idx) = instantaneous_voltage;
-    // KCL
     if (n1 >= 0) A(n1, current_idx) = 1.0;
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
@@ -185,16 +172,11 @@ void VCVS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int curren
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
 
-// **نسخه اصلاح شده**
 void VCCS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = node1 - 1;
     int n2 = node2 - 1;
     int cn1 = ctrlNode1 - 1;
     int cn2 = ctrlNode2 - 1;
-    // I_out = gain * (V(cn1) - V(cn2))
-    // جریان از n1 خارج و به n2 وارد می‌شود
-    // KCL at n1: ... + I_out = 0 => ... + gain*(V(cn1) - V(cn2)) = 0
-    // KCL at n2: ... - I_out = 0 => ... - gain*(V(cn1) - V(cn2)) = 0
     if (n1 >= 0) {
         if (cn1 >= 0) A(n1, cn1) += gain;
         if (cn2 >= 0) A(n1, cn2) -= gain;
@@ -205,21 +187,12 @@ void VCCS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int curren
     }
 }
 
-// **نسخه اصلاح شده**
 void CCVS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = node1 - 1;
     int n2 = node2 - 1;
-    // V_out = gain * I_ctrl
-    // The MNA current variable I_vsource flows OUT of the positive terminal.
-    // The SPICE control current flows INTO the positive terminal.
-    // Therefore, I_ctrl = -I_vsource.
-    // KVL: V(n1) - V(n2) - gain * (-I_vsource) = 0
-    // => V(n1) - V(n2) + gain * I_vsource = 0
     if (n1 >= 0) A(current_idx, n1) = 1.0;
     if (n2 >= 0) A(current_idx, n2) = -1.0;
     if (ctrlCurrentIdx != -1) A(current_idx, ctrlCurrentIdx) = gain; // Sign corrected to +
-
-    // KCL
     if (n1 >= 0) A(n1, current_idx) = 1.0;
     if (n2 >= 0) A(n2, current_idx) = -1.0;
 }
@@ -227,11 +200,6 @@ void CCVS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int curren
 void CCCS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = node1 - 1;
     int n2 = node2 - 1;
-    // I_out = gain * I_ctrl
-    // I_ctrl = -I_vsource
-    // I_out = -gain * I_vsource
-    // KCL at n1: ... - I_out = 0 => ... - (-gain * I_vsource) = 0 => ... + gain * I_vsource = 0
-    // KCL at n2: ... + I_out = 0 => ... + (-gain * I_vsource) = 0 => ... - gain * I_vsource = 0
     if (ctrlCurrentIdx != -1) {
         if (n1 >= 0) A(n1, ctrlCurrentIdx) += gain; // Correct
         if (n2 >= 0) A(n2, ctrlCurrentIdx) -= gain; // Correct
@@ -256,7 +224,6 @@ void VCCS::updateCtrlNodes(int oldNode, int newNode) {
 }
 
 double PulseVoltageSource::calculate_voltage_at(double t) const {
-    // اگر دوره تناوب صفر یا منفی باشد، پالس تکرار نمی‌شود
     if (t_period <= 0) {
         if (t <= t_delay) return v_initial;
         t -= t_delay;
@@ -267,8 +234,6 @@ double PulseVoltageSource::calculate_voltage_at(double t) const {
         if (t <= t_fall) return v_pulsed + (v_initial - v_pulsed) * t / t_fall;
         return v_initial;
     }
-
-    // مدیریت پالس‌های متناوب
     t = fmod(t, t_period);
 
     if (t <= t_delay) return v_initial;

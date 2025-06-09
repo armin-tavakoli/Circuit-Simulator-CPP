@@ -5,23 +5,16 @@
 #include <map>
 #include <queue> // For BFS algorithm to check connectivity
 
-/**
- * @brief Checks if the circuit has a ground node and is fully connected.
- * Throws a runtime_error if the circuit is invalid.
- */
 void Circuit::checkConnectivity() const {
     if (components.empty()) {
-        return; // An empty circuit is considered valid, nothing to analyze.
+        return;
     }
 
     set<int> allNodes = getNodes();
-
-    // 1. Check for the existence of a ground node (node 0)
     if (allNodes.find(0) == allNodes.end()) {
         throw runtime_error("Error: No ground node (0) detected in the circuit. Analysis requires a ground reference.");
     }
 
-    // 2. Check for disconnected parts (islands) using Breadth-First Search (BFS)
     map<int, vector<int>> adjList;
     for (const auto& comp : components) {
         int n1 = comp->getNode1();
@@ -29,7 +22,6 @@ void Circuit::checkConnectivity() const {
         adjList[n1].push_back(n2);
         adjList[n2].push_back(n1);
 
-        // Also consider control nodes for connectivity, as they form part of the graph
         if (auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
             adjList[vcvs->getCtrlNode1()].push_back(vcvs->getCtrlNode2());
             adjList[vcvs->getCtrlNode2()].push_back(vcvs->getCtrlNode1());
@@ -43,7 +35,7 @@ void Circuit::checkConnectivity() const {
     set<int> visitedNodes;
     queue<int> q;
 
-    q.push(0); // Start BFS from the ground node
+    q.push(0);
     visitedNodes.insert(0);
 
     while (!q.empty()) {
@@ -180,8 +172,6 @@ void Circuit::analyzeCircuit() {
         }
     }
 
-    // --- NEWLY ADDED ---
-    // Perform validity checks right before analysis
     checkConnectivity();
 }
 
@@ -193,7 +183,6 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
         return;
     }
 
-    // تعیین گام زمانی واقعی بر اساس Tmaxstep
     double actual_tstep = Tstep;
     if (Tmaxstep > 0 && Tmaxstep < Tstep) {
         actual_tstep = Tmaxstep;
@@ -284,7 +273,6 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
 
         x = x_nr_guess;
 
-        // فقط در صورتی چاپ کن که زمان فعلی بزرگتر یا مساوی Tstart باشد
         if (t >= Tstart) {
             cout << left << setw(15) << fixed << setprecision(6) << t;
             if (printAll) {

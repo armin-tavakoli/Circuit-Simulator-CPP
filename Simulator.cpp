@@ -5,16 +5,10 @@
 #include <filesystem>
 #include <regex>
 
-/**
- * @brief سازنده کلاس Simulator.
- */
+
 Simulator::Simulator() {
     setupDefaultModels();
 }
-
-/**
- * @brief مدل‌های پیش‌فرض دیود را ایجاد می‌کند.
- */
 void Simulator::setupDefaultModels() {
     DiodeModel standard;
     standard.name = "D";
@@ -26,9 +20,6 @@ void Simulator::setupDefaultModels() {
     diodeModels["Z"] = zener;
 }
 
-/**
- * @brief حلقه اصلی برنامه را اجرا می‌کند.
- */
 void Simulator::run() {
     string command;
     cout << "Welcome to the Circuit Simulator!" << endl;
@@ -49,9 +40,6 @@ void Simulator::run() {
     cout << "Simulator terminated." << endl;
 }
 
-/**
- * @brief یک دستور ورودی را تجزیه و تابع مربوط به آن را فراخوانی می‌کند.
- */
 void Simulator::processCommand(const string& command_in) {
     string command = command_in;
     command = regex_replace(command, regex("\\("), " ( ");
@@ -84,9 +72,6 @@ void Simulator::processCommand(const string& command_in) {
     else throw runtime_error("Unknown command '" + tokens[0] + "'");
 }
 
-/**
- * @brief تابع کمکی برای افزودن یک المان از روی آرگومان‌های تجزیه شده.
- */
 void Simulator::addComponentFromTokens(const vector<string>& args) {
     if (args.empty()) return;
 
@@ -313,7 +298,6 @@ void Simulator::handlePrint(const vector<string>& tokens) {
 
     vector<PrintVariable> printVars;
 
-    // This new loop correctly parses tokenized variables like "V", "(", "1", ")"
     while (vars_start_idx < tokens.size()) {
         const string& type_token = tokens[vars_start_idx];
         char type;
@@ -463,7 +447,6 @@ void Simulator::handleDC(const vector<string>& tokens) {
 
     circuit.runDCSweep(srcName, start, end, incr, printVars);
 }
-// این تابع را به انتهای فایل Simulator.cpp اضافه کنید
 void Simulator::handleHelp() {
     cout << "--- Circuit Simulator Help ---" << endl;
     cout << "Available Commands:" << endl << endl;
