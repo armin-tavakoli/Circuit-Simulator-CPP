@@ -140,15 +140,20 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             }
             break;
         }
-        case 'D': case 'E': case 'G': case 'H': case 'F': {
-            if (args.size() < 5) throw runtime_error("Dependent source definitions require at least 5 arguments.");
-            if (compType == 'D') {
-                if (args.size() != 4) throw runtime_error("Diode definition requires: D<name> n1 n2 <model>");
-                int n1 = stoi(args[1]), n2 = stoi(args[2]);
-                const string& modelName = args[3];
-                if (diodeModels.find(modelName) == diodeModels.end()) throw runtime_error("Model <" + modelName + "> not found");
-                circuit.addComponent(make_unique<Diode>(name, n1, n2, diodeModels.at(modelName)));
-            } else if (compType == 'E') {
+        case 'D': {
+            if (args.size() != 4) throw runtime_error("Diode definition requires: D<name> n1 n2 <model>"); //
+            int n1 = stoi(args[1]), n2 = stoi(args[2]);
+            const string& modelName = args[3];
+            if (diodeModels.find(modelName) == diodeModels.end()) throw runtime_error("Model <" + modelName + "> not found");
+            circuit.addComponent(make_unique<Diode>(name, n1, n2, diodeModels.at(modelName)));
+            break;
+        }
+
+        case 'E':
+        case 'G':
+        case 'H':
+        case 'F': {
+            if (compType == 'E') {
                 if (args.size() != 6) throw runtime_error("VCVS(E) requires: E<name> n+ n- c_n+ c_n- gain");
                 int n1 = stoi(args[1]), n2 = stoi(args[2]), cn1 = stoi(args[3]), cn2 = stoi(args[4]);
                 double gain = parseValue(args[5]);
@@ -161,7 +166,7 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
             } else if (compType == 'H') {
                 if (args.size() != 5) throw runtime_error("CCVS(H) requires: H<name> n+ n- v_ctrl gain");
                 int n1 = stoi(args[1]), n2 = stoi(args[2]);
-                const string& vctrl_name = args[3];
+                const string& vctrl_name = args[3]; //
                 double gain = parseValue(args[4]);
                 circuit.addComponent(make_unique<CCVS>(name, n1, n2, vctrl_name, gain));
             } else if (compType == 'F') {
@@ -169,7 +174,7 @@ void Simulator::addComponentFromTokens(const vector<string>& args) {
                 int n1 = stoi(args[1]), n2 = stoi(args[2]);
                 const string& vctrl_name = args[3];
                 double gain = parseValue(args[4]);
-                circuit.addComponent(make_unique<CCCS>(name, n1, n2, vctrl_name, gain));
+                circuit.addComponent(make_unique<CCCS>(name, n1, n2, vctrl_name, gain)); 
             }
             break;
         }
