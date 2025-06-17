@@ -1,0 +1,5 @@
+D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/CMakeFiles/circuit_simulator.dir
+D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/CMakeFiles/circuit_simulator_autogen_timestamp_deps.dir
+D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/CMakeFiles/circuit_simulator_autogen.dir

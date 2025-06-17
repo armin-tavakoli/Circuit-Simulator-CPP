@@ -1,0 +1,30 @@
+# ninja log v6
+19	6811	7718204582360355	circuit_simulator_autogen/timestamp	65e768575412f53d
+6907	14131	7718204585644616	CMakeFiles/circuit_simulator.dir/main.cpp.obj	3c99fcb296c762dd
+19	6811	7718204582360355	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+6916	11244	7718204585734625	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	e08de06ce1fe2e1b
+19550	24790	7718204712082328	CMakeFiles/circuit_simulator.dir/TransientAnalysisDialog.cpp.obj	bb7990debcd43851
+11244	22045	7718204629017496	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	7d7e45f4b37fcd20
+6911	26317	7718204585684620	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	586c05206fa813d0
+19	6811	7718204582360355	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+22045	22144	7718204737023393	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/EWIEGA46WW/qrc_resources.cpp.obj	385d33f04fb5caff
+7184	8200	7718056689118576	circuit_simulator.exe	2e165b8463ca5cf
+19	6811	7718204582360355	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+6902	14092	7718204585594626	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/mocs_compilation.cpp.obj	b2ec6a87ffd04594
+14092	19949	7718204657492023	CMakeFiles/circuit_simulator.dir/MainWindow.cpp.obj	41e2db1968de5212
+6812	6902	7718204585454649	circuit_simulator_autogen/EWIEGA46WW/qrc_resources.cpp	105fd0a29d6bb274
+6812	6902	7718204585454649	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/EWIEGA46WW/qrc_resources.cpp	105fd0a29d6bb274
+9	1716	7718181365386692	build.ninja	cb1e58148591844f
+14131	19550	7718204657891998	CMakeFiles/circuit_simulator.dir/CircuitView.cpp.obj	b1ab638adff41f77
+41	130	7718205366909429	CMakeFiles/clean.additional	73787ed73376b7a1
+130	174	7718205367810300	clean	8f9597ac2bd17386
+28	4346	7718205450803202	circuit_simulator_autogen/timestamp	65e768575412f53d
+28	4346	7718205450803202	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+28	4346	7718205450803202	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+28	4346	7718205450803202	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+4347	4423	7718205452481577	circuit_simulator_autogen/EWIEGA46WW/qrc_resources.cpp	105fd0a29d6bb274
+4347	4423	7718205452481577	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/EWIEGA46WW/qrc_resources.cpp	105fd0a29d6bb274
+4436	9169	7718205452721582	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	e08de06ce1fe2e1b
+4427	11967	7718205452631588	CMakeFiles/circuit_simulator.dir/main.cpp.obj	3c99fcb296c762dd
+9169	21798	7718205500052417	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	7d7e45f4b37fcd20
+4431	25629	7718205452671570	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	586c05206fa813d0
