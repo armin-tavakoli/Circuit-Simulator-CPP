@@ -76,7 +76,7 @@ public:
     CurrentSource(const string& name, int n1, int n2, double current);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
-    void set_dc_value(double val) override { current = val; }
+    void set_dc_value(double val) override { this->current = val; }
     double get_dc_value() const override { return current; }
     string toNetlistString() const override;
 private:
@@ -134,6 +134,8 @@ public:
     int getCtrlNode2() const { return ctrlNode2; }
     void updateCtrlNodes(int oldNode, int newNode);
     string toNetlistString() const override;
+    double get_gain() const { return gain; }
+
 private:
     int ctrlNode1;
     int ctrlNode2;
@@ -149,6 +151,8 @@ public:
     int getCtrlNode2() const { return ctrlNode2; }
     void updateCtrlNodes(int oldNode, int newNode);
     string toNetlistString() const override;
+    double get_gain() const { return gain; }
+
 private:
     int ctrlNode1, ctrlNode2;
     double gain;
@@ -162,6 +166,8 @@ public:
     bool addsCurrentVariable() const override { return true; }
     string getCtrlVName() const override { return ctrlVName; }
     string toNetlistString() const override;
+    double get_gain() const { return gain; }
+
 private:
     string ctrlVName;
     double gain;
@@ -174,6 +180,8 @@ public:
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
     string getCtrlVName() const override { return ctrlVName; }
     string toNetlistString() const override;
+    double get_gain() const { return gain; }
+
 private:
     string ctrlVName;
     double gain;

@@ -1,0 +1,3 @@
+set(__QT_DEPLOY_TARGET_circuit_simulator_FILE D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator.exe)
+set(__QT_DEPLOY_TARGET_circuit_simulator_TYPE EXECUTABLE)
+set(__QT_DEPLOY_TARGET_circuit_simulator_RUNTIME_DLLS D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/bin/Qt6Widgets.dll;D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/bin/Qt6Gui.dll;D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/bin/Qt6Core.dll)
