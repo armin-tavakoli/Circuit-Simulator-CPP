@@ -34,14 +34,15 @@ void VCVSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawLine(8, -12, 14, -12);
     painter->drawLine(11, -15, 11, -9);
     painter->drawLine(8, 12, 14, 12);
+
     painter->setPen(Qt::yellow);
     painter->setFont(QFont("Arial", 10));
     QRectF nameRect(-40, -50, 80, 20);
     painter->drawText(nameRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
-    if (auto comp = dynamic_cast<VCVS*>(getComponent())) {
-        QRectF gainRect(-40, 30, 80, 20);
-        painter->drawText(gainRect, Qt::AlignCenter, "Gain=" + QString::number(comp->get_gain()));
-    }
+
+    // Display component value using the new method
+    QRectF valueRect(-40, 30, 80, 20);
+    painter->drawText(valueRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getDisplayValue()));
 }
 
 void VCCSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -54,14 +55,15 @@ void VCCSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawLine(0, -15, 0, 15);
     painter->drawLine(0, 15, -5, 8);
     painter->drawLine(0, 15, 5, 8);
+
     painter->setPen(Qt::yellow);
     painter->setFont(QFont("Arial", 10));
     QRectF nameRect(-40, -50, 80, 20);
     painter->drawText(nameRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
-    if (auto comp = dynamic_cast<VCCS*>(getComponent())) {
-        QRectF gainRect(-40, 30, 80, 20);
-        painter->drawText(gainRect, Qt::AlignCenter, "Gain=" + QString::number(comp->get_gain()));
-    }
+
+    // Display component value using the new method
+    QRectF valueRect(-40, 30, 80, 20);
+    painter->drawText(valueRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getDisplayValue()));
 }
 
 void CCVSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -75,14 +77,15 @@ void CCVSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawLine(8, -12, 14, -12);
     painter->drawLine(11, -15, 11, -9);
     painter->drawLine(8, 12, 14, 12);
+
     painter->setPen(Qt::yellow);
     painter->setFont(QFont("Arial", 10));
     QRectF nameRect(-40, -50, 80, 20);
     painter->drawText(nameRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
-    if (auto comp = dynamic_cast<CCVS*>(getComponent())) {
-        QRectF gainRect(-40, 30, 80, 20);
-        painter->drawText(gainRect, Qt::AlignCenter, "Gain=" + QString::number(comp->get_gain()));
-    }
+
+    // Display component value using the new method
+    QRectF valueRect(-40, 30, 80, 20);
+    painter->drawText(valueRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getDisplayValue()));
 }
 
 void CCCSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -95,12 +98,13 @@ void CCCSItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawLine(0, -15, 0, 15);
     painter->drawLine(0, 15, -5, 8);
     painter->drawLine(0, 15, 5, 8);
+
     painter->setPen(Qt::yellow);
     painter->setFont(QFont("Arial", 10));
     QRectF nameRect(-40, -50, 80, 20);
     painter->drawText(nameRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
-    if (auto comp = dynamic_cast<CCCS*>(getComponent())) {
-        QRectF gainRect(-40, 30, 80, 20);
-        painter->drawText(gainRect, Qt::AlignCenter, "Gain=" + QString::number(comp->get_gain()));
-    }
+
+    // Display component value using the new method
+    QRectF valueRect(-40, 30, 80, 20);
+    painter->drawText(valueRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getDisplayValue()));
 }

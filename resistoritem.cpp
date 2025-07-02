@@ -28,7 +28,13 @@ void ResistorItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
              << QPointF(15, -8) << QPointF(25, 8)
              << QPointF(30, 0) << QPointF(40, 0);
     painter->drawPolyline(polyline);
+
     painter->setPen(Qt::yellow);
-    QRectF textRect(-40, -30, 80, 20);
-    painter->drawText(textRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
+    // Display component name
+    QRectF nameRect(-40, -30, 80, 20);
+    painter->drawText(nameRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
+
+    // Display component value
+    QRectF valueRect(-40, 10, 80, 20);
+    painter->drawText(valueRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getDisplayValue()));
 }

@@ -25,7 +25,13 @@ void CapacitorItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->drawLine(-5, -10, -5, 10);
     painter->drawLine(5, -10, 5, 10);
     painter->drawLine(5, 0, 30, 0);
+
     painter->setPen(Qt::yellow);
-    QRectF textRect(-30, -30, 60, 20);
-    painter->drawText(textRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
+    // Display component name
+    QRectF nameRect(-30, -30, 60, 20);
+    painter->drawText(nameRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getName()));
+
+    // Display component value
+    QRectF valueRect(-30, 10, 60, 20);
+    painter->drawText(valueRect, Qt::AlignCenter, QString::fromStdString(getComponent()->getDisplayValue()));
 }

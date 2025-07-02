@@ -7,7 +7,6 @@
 #include "Circuit.h"
 #include "schematiceditor.h"
 
-// <<<
 class ScopeWindow;
 
 class MainWindow : public QMainWindow
@@ -34,13 +33,17 @@ private slots:
     void onAddCCCS();
     void onRunSimulation();
 
+    // <<< اسلات‌های جدید برای منابع سینوسی و پالس اضافه شدند >>>
+    void onAddSinusoidalSource();
+    void onAddPulseSource();
+
 private:
     void setupMenus();
     std::string getNextComponentName(const std::string& prefix);
 
     SchematicEditor *editor;
     Circuit circuit;
-    ScopeWindow *m_scopeWindow = nullptr; // <<<
+    ScopeWindow *m_scopeWindow = nullptr;
 
     std::map<std::string, int> componentCounters;
 };

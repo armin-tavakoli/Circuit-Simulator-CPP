@@ -8,7 +8,7 @@ class TerminalItem;
 
 class ComponentItem : public QGraphicsObject
 {
-    Q_OBJECT
+Q_OBJECT
 
 public:
     explicit ComponentItem(Component* component, QGraphicsItem *parent = nullptr);
@@ -23,6 +23,8 @@ public:
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+    // Override mouseDoubleClickEvent to handle property changes
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override;
 
     TerminalItem *m_terminal1;
     TerminalItem *m_terminal2;

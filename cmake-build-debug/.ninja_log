@@ -1,50 +1,63 @@
 # ninja log v6
-2109	9243	7731223878097221	CMakeFiles/circuit_simulator.dir/main.cpp.obj	3c99fcb296c762dd
-40	2105	7731223877147288	circuit_simulator_autogen/timestamp	65e768575412f53d
-40	2105	7731223877147288	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
-31982	37025	7731224176822373	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	e08de06ce1fe2e1b
-33044	46124	7731224187326659	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	7d7e45f4b37fcd20
-24685	31982	7731224103767099	CMakeFiles/circuit_simulator.dir/polylinewireitem.cpp.obj	a0fbc9b362aec378
-25542	48951	7731224112360781	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	586c05206fa813d0
-2118	10838	7731223878177229	CMakeFiles/circuit_simulator.dir/schematiceditor.cpp.obj	47ee79829df475b7
-18807	25542	7731224045064702	CMakeFiles/circuit_simulator.dir/currentsourceitem.cpp.obj	a791ac1ad67fd4bb
-40	2105	7731223877147288	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
-48951	77220	7731224346503764	circuit_simulator.exe	d3d1784158101f68
-40	2105	7731223877147288	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
-2106	9619	7731223878056383	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/mocs_compilation.cpp.obj	b2ec6a87ffd04594
-8	5350	7731225649250817	build.ninja	cb1e58148591844f
-2114	10818	7731223878137240	CMakeFiles/circuit_simulator.dir/mainwindow.cpp.obj	f4ede0f2533d22c6
-9619	17507	7731223953191829	CMakeFiles/circuit_simulator.dir/terminalitem.cpp.obj	a334f072c6ac3b39
-9244	16523	7731223949433696	CMakeFiles/circuit_simulator.dir/componentitem.cpp.obj	4d4c99a1215f4c84
-84	133	7731195894058160	clean	54a06fd83fad62cf
-10819	18406	7731223965182359	CMakeFiles/circuit_simulator.dir/grounditem.cpp.obj	26956d5765470f1f
-46	83	7731195893671812	CMakeFiles/clean.additional	73787ed73376b7a1
-10839	18806	7731223965385087	CMakeFiles/circuit_simulator.dir/resistoritem.cpp.obj	b187c4f18d7fc685
-16523	23997	7731224022224675	CMakeFiles/circuit_simulator.dir/capacitoritem.cpp.obj	147fe8c595e3d674
-17507	24685	7731224032065416	CMakeFiles/circuit_simulator.dir/inductoritem.cpp.obj	44907e00635cf79
-18407	25391	7731224041064702	CMakeFiles/circuit_simulator.dir/voltagesourceitem.cpp.obj	8a28dfc0e3daad67
-24024	33044	7731224097204538	CMakeFiles/circuit_simulator.dir/dependentsourceitems.cpp.obj	41787b79e58ce002
-25391	33759	7731224110798413	CMakeFiles/circuit_simulator.dir/scopewindow.cpp.obj	93ab6e0e5752e8c2
-52	2983	7731225897823500	circuit_simulator_autogen/timestamp	65e768575412f53d
-52	2983	7731225897823500	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
-52	2983	7731225897823500	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
-52	2983	7731225897823500	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
 2991	11585	7731225899290443	CMakeFiles/circuit_simulator.dir/main.cpp.obj	3c99fcb296c762dd
-2986	12062	7731225899250445	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/mocs_compilation.cpp.obj	b2ec6a87ffd04594
+52	2983	7731225897823500	circuit_simulator_autogen/timestamp	65e768575412f53d
+52	2983	7731225897823500	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+37822	41434	7731226247610753	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	e08de06ce1fe2e1b
+38802	49474	7731226257406020	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	7d7e45f4b37fcd20
 3000	13742	7731225899390413	CMakeFiles/circuit_simulator.dir/schematiceditor.cpp.obj	47ee79829df475b7
+31481	51770	7731226184199056	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	586c05206fa813d0
+52	2983	7731225897823500	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+22469	31480	7731226094074706	CMakeFiles/circuit_simulator.dir/currentsourceitem.cpp.obj	a791ac1ad67fd4bb
+29480	37822	7731226164191884	CMakeFiles/circuit_simulator.dir/polylinewireitem.cpp.obj	a0fbc9b362aec378
+51770	81827	7731226387091452	circuit_simulator.exe	d3d1784158101f68
+52	2983	7731225897823500	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+2986	12062	7731225899250445	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/mocs_compilation.cpp.obj	b2ec6a87ffd04594
+8	5350	7731271875098884	build.ninja	cb1e58148591844f
 2995	13997	7731225899340423	CMakeFiles/circuit_simulator.dir/mainwindow.cpp.obj	f4ede0f2533d22c6
-11585	20735	7731225985241464	CMakeFiles/circuit_simulator.dir/componentitem.cpp.obj	4d4c99a1215f4c84
 12062	21359	7731225990015889	CMakeFiles/circuit_simulator.dir/terminalitem.cpp.obj	a334f072c6ac3b39
+11585	20735	7731225985241464	CMakeFiles/circuit_simulator.dir/componentitem.cpp.obj	4d4c99a1215f4c84
+84	133	7731195894058160	clean	54a06fd83fad62cf
 13742	22303	7731226006812629	CMakeFiles/circuit_simulator.dir/grounditem.cpp.obj	26956d5765470f1f
+46	83	7731195893671812	CMakeFiles/clean.additional	73787ed73376b7a1
 13997	22469	7731226009358796	CMakeFiles/circuit_simulator.dir/resistoritem.cpp.obj	b187c4f18d7fc685
 20735	28450	7731226076733551	CMakeFiles/circuit_simulator.dir/capacitoritem.cpp.obj	147fe8c595e3d674
 21359	29480	7731226082981511	CMakeFiles/circuit_simulator.dir/inductoritem.cpp.obj	44907e00635cf79
 22303	30586	7731226092422057	CMakeFiles/circuit_simulator.dir/voltagesourceitem.cpp.obj	8a28dfc0e3daad67
-22469	31480	7731226094074706	CMakeFiles/circuit_simulator.dir/currentsourceitem.cpp.obj	a791ac1ad67fd4bb
-29480	37822	7731226164191884	CMakeFiles/circuit_simulator.dir/polylinewireitem.cpp.obj	a0fbc9b362aec378
 28450	38802	7731226153891202	CMakeFiles/circuit_simulator.dir/dependentsourceitems.cpp.obj	41787b79e58ce002
 30586	38858	7731226175252477	CMakeFiles/circuit_simulator.dir/scopewindow.cpp.obj	93ab6e0e5752e8c2
-37822	41434	7731226247610753	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	e08de06ce1fe2e1b
-38802	49474	7731226257406020	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	7d7e45f4b37fcd20
-31481	51770	7731226184199056	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	586c05206fa813d0
-51770	81827	7731226387091452	circuit_simulator.exe	d3d1784158101f68
+67	2883	7731276123056968	circuit_simulator_autogen/timestamp	65e768575412f53d
+67	2883	7731276123056968	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+67	2883	7731276123056968	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+67	2883	7731276123056968	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+2890	13839	7731276124467586	CMakeFiles/circuit_simulator.dir/main.cpp.obj	3c99fcb296c762dd
+2885	14691	7731276124417557	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/mocs_compilation.cpp.obj	b2ec6a87ffd04594
+2899	16368	7731276124557589	CMakeFiles/circuit_simulator.dir/schematiceditor.cpp.obj	47ee79829df475b7
+57	2479	7731278014194935	circuit_simulator_autogen/timestamp	65e768575412f53d
+57	2479	7731278014194935	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+57	2479	7731278014194935	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+57	2479	7731278014194935	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+2487	12785	7731278016297057	CMakeFiles/circuit_simulator.dir/main.cpp.obj	3c99fcb296c762dd
+2498	12891	7731278016417138	CMakeFiles/circuit_simulator.dir/componentitem.cpp.obj	4d4c99a1215f4c84
+2480	13135	7731278016230001	CMakeFiles/circuit_simulator.dir/circuit_simulator_autogen/mocs_compilation.cpp.obj	b2ec6a87ffd04594
+2491	15208	7731278016337028	CMakeFiles/circuit_simulator.dir/mainwindow.cpp.obj	f4ede0f2533d22c6
+12891	20489	7731278120336874	CMakeFiles/circuit_simulator.dir/grounditem.cpp.obj	26956d5765470f1f
+12785	20759	7731278119285948	CMakeFiles/circuit_simulator.dir/terminalitem.cpp.obj	a334f072c6ac3b39
+13135	21094	7731278122775289	CMakeFiles/circuit_simulator.dir/resistoritem.cpp.obj	b187c4f18d7fc685
+15208	22736	7731278143508121	CMakeFiles/circuit_simulator.dir/capacitoritem.cpp.obj	147fe8c595e3d674
+20489	27854	7731278196325037	CMakeFiles/circuit_simulator.dir/inductoritem.cpp.obj	44907e00635cf79
+20759	27952	7731278199022167	CMakeFiles/circuit_simulator.dir/voltagesourceitem.cpp.obj	8a28dfc0e3daad67
+70	881	7731280189326384	circuit_simulator_autogen/timestamp	65e768575412f53d
+70	881	7731280189326384	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+70	881	7731280189326384	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+70	881	7731280189326384	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+896	6927	7731280197588080	CMakeFiles/circuit_simulator.dir/Component.cpp.obj	e08de06ce1fe2e1b
+882	10740	7731280197444981	CMakeFiles/circuit_simulator.dir/currentsourceitem.cpp.obj	a791ac1ad67fd4bb
+888	10984	7731280197508095	CMakeFiles/circuit_simulator.dir/dependentsourceitems.cpp.obj	41787b79e58ce002
+10741	15993	7731280296033719	CMakeFiles/circuit_simulator.dir/propertiesdialog.cpp.obj	e5f08505ca3e1231
+6928	16720	7731280257906327	CMakeFiles/circuit_simulator.dir/Simulator.cpp.obj	7d7e45f4b37fcd20
+53	397	7731281890402261	circuit_simulator_autogen/timestamp	65e768575412f53d
+53	397	7731281890402261	circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+53	397	7731281890402261	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/timestamp	65e768575412f53d
+53	397	7731281890402261	D:/Course/Current courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/mocs_compilation.cpp	65e768575412f53d
+399	14996	7731281893861518	CMakeFiles/circuit_simulator.dir/Circuit.cpp.obj	586c05206fa813d0
+14996	41677	7731282039835593	circuit_simulator.exe	5f0c76f16facd176

@@ -59,6 +59,8 @@ add_executable(circuit_simulator
         DiodeModel.h
         PrintRequest.h
         ValueParser.h
+        propertiesdialog.cpp
+        propertiesdialog.h
 )
 
 # <<< کتابخانه Charts به این خط اضافه شد >>>

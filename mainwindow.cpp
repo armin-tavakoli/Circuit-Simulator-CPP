@@ -6,7 +6,8 @@
 #include "currentsourceitem.h"
 #include "grounditem.h"
 #include "dependentsourceitems.h"
-#include "scopewindow.h" // <<<
+#include "scopewindow.h"
+#include "propertiesdialog.h" // For adding new sources
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
@@ -14,6 +15,7 @@
 #include <QGraphicsScene>
 #include <QToolBar>
 #include <QPushButton>
+#include <utility> // Required for std::move
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent)
@@ -39,7 +41,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    // The scope window will be deleted automatically as it's a child of MainWindow
 }
 
 void MainWindow::setupMenus()
@@ -57,6 +58,8 @@ void MainWindow::setupMenus()
     editMenu->addAction(tr("Add &Inductor"), this, &MainWindow::onAddInductor);
     editMenu->addSeparator();
     editMenu->addAction(tr("Add DC &Voltage Source"), this, &MainWindow::onAddVoltageSource);
+    editMenu->addAction(tr("Add &Sinusoidal Source"), this, &MainWindow::onAddSinusoidalSource);
+    editMenu->addAction(tr("Add &Pulse Source"), this, &MainWindow::onAddPulseSource);
     editMenu->addAction(tr("Add DC &Current Source"), this, &MainWindow::onAddCurrentSource);
     editMenu->addSeparator();
     editMenu->addAction(tr("Add VCVS (E)"), this, &MainWindow::onAddVCVS);
@@ -90,7 +93,6 @@ void MainWindow::onRunSimulation()
     try {
         circuit.runTransientAnalysis(1e-3, 1e-6);
 
-        // <<< نمایش پنجره Scope >>>
         if (m_scopeWindow) {
             m_scopeWindow->close();
             delete m_scopeWindow;
@@ -103,7 +105,6 @@ void MainWindow::onRunSimulation()
     }
 }
 
-// ... بقیه توابع بدون تغییر ...
 std::string MainWindow::getNextComponentName(const std::string& prefix)
 {
     int count = componentCounters[prefix];
@@ -117,8 +118,8 @@ void MainWindow::onFileSave() { QMessageBox::information(this, "Action", "Save F
 
 void MainWindow::onAddResistor()
 {
-    std::string name = getNextComponentName("R");
-    auto logic_comp = std::make_unique<Resistor>(name, -1, -1, 1000.0);
+    string name = getNextComponentName("R");
+    auto logic_comp = make_unique<Resistor>(name, -1, -1, 1000.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new ResistorItem(ptr));
@@ -126,8 +127,8 @@ void MainWindow::onAddResistor()
 
 void MainWindow::onAddCapacitor()
 {
-    std::string name = getNextComponentName("C");
-    auto logic_comp = std::make_unique<Capacitor>(name, -1, -1, 1e-6);
+    string name = getNextComponentName("C");
+    auto logic_comp = make_unique<Capacitor>(name, -1, -1, 1e-6);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new CapacitorItem(ptr));
@@ -135,8 +136,8 @@ void MainWindow::onAddCapacitor()
 
 void MainWindow::onAddInductor()
 {
-    std::string name = getNextComponentName("L");
-    auto logic_comp = std::make_unique<Inductor>(name, -1, -1, 1e-3);
+    string name = getNextComponentName("L");
+    auto logic_comp = make_unique<Inductor>(name, -1, -1, 1e-3);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new InductorItem(ptr));
@@ -144,8 +145,8 @@ void MainWindow::onAddInductor()
 
 void MainWindow::onAddVoltageSource()
 {
-    std::string name = getNextComponentName("V");
-    auto logic_comp = std::make_unique<VoltageSource>(name, -1, -1, 5.0);
+    string name = getNextComponentName("V");
+    auto logic_comp = make_unique<VoltageSource>(name, -1, -1, 5.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new VoltageSourceItem(ptr));
@@ -153,8 +154,8 @@ void MainWindow::onAddVoltageSource()
 
 void MainWindow::onAddCurrentSource()
 {
-    std::string name = getNextComponentName("I");
-    auto logic_comp = std::make_unique<CurrentSource>(name, -1, -1, 1.0);
+    string name = getNextComponentName("I");
+    auto logic_comp = make_unique<CurrentSource>(name, -1, -1, 1.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new CurrentSourceItem(ptr));
@@ -168,8 +169,8 @@ void MainWindow::onAddGround()
 
 void MainWindow::onAddVCVS()
 {
-    std::string name = getNextComponentName("E");
-    auto logic_comp = std::make_unique<VCVS>(name, -1, -1, -1, -1, 2.0);
+    string name = getNextComponentName("E");
+    auto logic_comp = make_unique<VCVS>(name, -1, -1, -1, -1, 2.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new VCVSItem(ptr));
@@ -177,8 +178,8 @@ void MainWindow::onAddVCVS()
 
 void MainWindow::onAddVCCS()
 {
-    std::string name = getNextComponentName("G");
-    auto logic_comp = std::make_unique<VCCS>(name, -1, -1, -1, -1, 0.1);
+    string name = getNextComponentName("G");
+    auto logic_comp = make_unique<VCCS>(name, -1, -1, -1, -1, 0.1);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new VCCSItem(ptr));
@@ -186,8 +187,8 @@ void MainWindow::onAddVCCS()
 
 void MainWindow::onAddCCVS()
 {
-    std::string name = getNextComponentName("H");
-    auto logic_comp = std::make_unique<CCVS>(name, -1, -1, "Vdummy", 10.0);
+    string name = getNextComponentName("H");
+    auto logic_comp = make_unique<CCVS>(name, -1, -1, "Vdummy", 10.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new CCVSItem(ptr));
@@ -195,9 +196,48 @@ void MainWindow::onAddCCVS()
 
 void MainWindow::onAddCCCS()
 {
-    std::string name = getNextComponentName("F");
-    auto logic_comp = std::make_unique<CCCS>(name, -1, -1, "Vdummy", 5.0);
+    string name = getNextComponentName("F");
+    auto logic_comp = make_unique<CCCS>(name, -1, -1, "Vdummy", 5.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new CCCSItem(ptr));
+}
+
+
+void MainWindow::onAddSinusoidalSource()
+{
+    string name = getNextComponentName("V");
+    auto tempSource = SinusoidalVoltageSource(name, -1, -1, 0, 5, 1000);
+    PropertiesDialog dialog(tempSource.getProperties(), this);
+    if (dialog.exec() == QDialog::Accepted) {
+        try {
+            auto props = dialog.getProperties();
+            auto logic_comp = make_unique<SinusoidalVoltageSource>(name, -1, -1, props["Offset"], props["Amplitude"], props["Frequency"]);
+            Component* ptr = logic_comp.get();
+            circuit.addComponent(std::move(logic_comp));
+            editor->scene()->addItem(new VoltageSourceItem(ptr));
+        } catch (const std::exception& e) {
+            QMessageBox::warning(this, "Invalid Value", e.what());
+        }
+    }
+}
+
+void MainWindow::onAddPulseSource()
+{
+    string name = getNextComponentName("V");
+    auto tempSource = PulseVoltageSource(name, -1, -1, 0, 5, 0, 1e-9, 1e-9, 5e-7, 1e-6);
+    PropertiesDialog dialog(tempSource.getProperties(), this);
+    if (dialog.exec() == QDialog::Accepted) {
+        try {
+            auto props = dialog.getProperties();
+            auto logic_comp = make_unique<PulseVoltageSource>(name, -1, -1,
+                                                              props["Initial Value"], props["Pulsed Value"], props["Delay"],
+                                                              props["Rise Time"], props["Fall Time"], props["Pulse Width"], props["Period"]);
+            Component* ptr = logic_comp.get();
+            circuit.addComponent(std::move(logic_comp));
+            editor->scene()->addItem(new VoltageSourceItem(ptr));
+        } catch (const std::exception& e) {
+            QMessageBox::warning(this, "Invalid Value", e.what());
+        }
+    }
 }

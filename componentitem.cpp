@@ -1,8 +1,11 @@
 #include "componentitem.h"
 #include "terminalitem.h"
+#include "propertiesdialog.h" // The new dialog class
 #include <cmath>
 #include <QDebug>
-#include <QTimer> // Required for QTimer::singleShot
+#include <QTimer>
+#include <QGraphicsSceneMouseEvent>
+#include <QMessageBox>
 
 ComponentItem::ComponentItem(Component *component, QGraphicsItem *parent)
         : QGraphicsObject(parent), logicalComponent(component)
@@ -15,11 +18,8 @@ ComponentItem::ComponentItem(Component *component, QGraphicsItem *parent)
     m_terminal2 = new TerminalItem(this, 1);
 }
 
-// The destructor is defaulted in the header, no need for a body here.
-
 QRectF ComponentItem::boundingRect() const
 {
-    // Specific components will override this.
     return QRectF();
 }
 
@@ -44,8 +44,6 @@ QVariant ComponentItem::itemChange(GraphicsItemChange change, const QVariant &va
         qreal y = round(newPos.y() / gridSize) * gridSize;
         QPointF snappedPos(x, y);
 
-        // This is a workaround to update wires *after* the move has been committed.
-        // It schedules the update to happen as soon as the event loop is free.
         QTimer::singleShot(0, this, [this]() {
             if (m_terminal1) m_terminal1->updateConnectedWires();
             if (m_terminal2 && m_terminal2->isVisible()) m_terminal2->updateConnectedWires();
@@ -54,4 +52,28 @@ QVariant ComponentItem::itemChange(GraphicsItemChange change, const QVariant &va
         return snappedPos;
     }
     return QGraphicsItem::itemChange(change, value);
+}
+
+void ComponentItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (!logicalComponent) return;
+
+    auto currentProps = logicalComponent->getProperties();
+    if (currentProps.empty()) {
+        QGraphicsObject::mouseDoubleClickEvent(event);
+        return;
+    }
+
+    PropertiesDialog dialog(currentProps, event->widget());
+    if (dialog.exec() == QDialog::Accepted) {
+        try {
+            auto newProps = dialog.getProperties();
+            logicalComponent->setProperties(newProps);
+            update(); // Redraw to show new value
+        } catch (const std::exception& e) {
+            QMessageBox::warning(event->widget(), "Invalid Value", e.what());
+        }
+    }
+
+    QGraphicsObject::mouseDoubleClickEvent(event);
 }
