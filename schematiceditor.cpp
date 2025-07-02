@@ -32,7 +32,6 @@ void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
         painter->drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y));
 }
 
-// Helper function to find a terminal at a specific position
 TerminalItem* SchematicEditor::getTerminalAt(const QPoint& pos)
 {
     for (QGraphicsItem* item : items(pos)) {
@@ -43,7 +42,6 @@ TerminalItem* SchematicEditor::getTerminalAt(const QPoint& pos)
     return nullptr;
 }
 
-// Helper function to find a wire at a specific position
 PolylineWireItem* SchematicEditor::getWireAt(const QPoint& pos)
 {
     for (QGraphicsItem* item : items(pos)) {
@@ -54,7 +52,6 @@ PolylineWireItem* SchematicEditor::getWireAt(const QPoint& pos)
     return nullptr;
 }
 
-// Helper function to snap a point to the nearest grid point
 QPointF SchematicEditor::snapToGrid(const QPointF& pos)
 {
     const int gridSize = 20;
@@ -63,13 +60,11 @@ QPointF SchematicEditor::snapToGrid(const QPointF& pos)
     return QPointF(x, y);
 }
 
-// Slot to enable/disable wiring mode
 void SchematicEditor::toggleWiringMode(bool enabled)
 {
     if (enabled) {
-        m_wiringState = WiringState::NotWiring; // Wait for the first click to start
+        m_wiringState = WiringState::NotWiring;
     } else {
-        // Cancel any ongoing wiring process
         if (m_currentWire) {
             scene()->removeItem(m_currentWire);
             delete m_currentWire;
@@ -84,7 +79,6 @@ void SchematicEditor::toggleWiringMode(bool enabled)
     }
 }
 
-// Handles mouse movement to draw temporary wire previews
 void SchematicEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_wiringState == WiringState::DrawingWire) {
@@ -111,17 +105,14 @@ void SchematicEditor::mouseMoveEvent(QMouseEvent *event)
     QGraphicsView::mouseMoveEvent(event);
 }
 
-// Handles mouse clicks to start, create corners, or end wires
 void SchematicEditor::mousePressEvent(QMouseEvent *event)
 {
-    // Cancel wiring with a right-click at any point during the process
     if (event->button() == Qt::RightButton && m_wiringState == WiringState::DrawingWire) {
         toggleWiringMode(false);
         return;
     }
 
     if (m_wiringState == WiringState::NotWiring) {
-        // State before starting a wire.
         if (event->button() == Qt::LeftButton) {
             if (auto startTerminal = getTerminalAt(event->pos())) {
                 m_currentWire = new PolylineWireItem(startTerminal);
@@ -130,12 +121,10 @@ void SchematicEditor::mousePressEvent(QMouseEvent *event)
             }
         }
     } else if (m_wiringState == WiringState::DrawingWire) {
-        // State while a wire is being drawn.
         if (event->button() == Qt::LeftButton) {
             QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
 
             if (auto endTerminal = getTerminalAt(event->pos())) {
-                // Case 1: Finish the wire on a terminal.
                 if (endTerminal != m_currentWire->getStartTerminal()) {
                     QPointF lastP = m_currentWire->lastPoint();
                     m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
@@ -143,11 +132,10 @@ void SchematicEditor::mousePressEvent(QMouseEvent *event)
                     registerLogicalConnection(m_currentWire->getStartTerminal(), endTerminal);
                 }
                 m_currentWire = nullptr;
-                m_wiringState = WiringState::NotWiring; // Exit drawing mode.
+                m_wiringState = WiringState::NotWiring;
             } else if (auto clickedWire = getWireAt(event->pos())) {
-                // Case 2: Finish on another wire, creating a junction.
                 scene()->addItem(new JunctionItem(snappedPos));
-                auto junctionTerminal = new TerminalItem(nullptr, -1); // Dummy terminal for the junction
+                auto junctionTerminal = new TerminalItem(nullptr, -1);
                 junctionTerminal->setPos(snappedPos);
                 scene()->addItem(junctionTerminal);
 
@@ -155,14 +143,12 @@ void SchematicEditor::mousePressEvent(QMouseEvent *event)
                 m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
                 m_currentWire->setEndTerminal(junctionTerminal);
 
-                // Register logical connections for the new node
                 registerLogicalConnection(m_currentWire->getStartTerminal(), junctionTerminal);
                 registerLogicalConnection(clickedWire->getStartTerminal(), junctionTerminal);
 
                 m_currentWire = nullptr;
                 m_wiringState = WiringState::NotWiring;
             } else {
-                // Case 3: Add a corner point in empty space.
                 QPointF lastP = m_currentWire->lastPoint();
                 m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
                 m_currentWire->addPoint(snappedPos);
@@ -170,7 +156,6 @@ void SchematicEditor::mousePressEvent(QMouseEvent *event)
         }
     }
 
-    // Clear the temporary preview segments after any click.
     for(auto segment : m_tempPreviewSegments) {
         scene()->removeItem(segment);
         delete segment;
@@ -185,10 +170,10 @@ void SchematicEditor::mouseReleaseEvent(QMouseEvent *event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-// Manages the logical connection between terminals
 void SchematicEditor::registerLogicalConnection(TerminalItem* term1, TerminalItem* term2)
 {
-    // This function can be further improved, but the core logic is here.
+    if (!term1 || !term2) return;
+
     int node1_idx = -1, node2_idx = -1;
     for (size_t i = 0; i < m_logicalNodes.size(); ++i) {
         if (m_logicalNodes[i].count(term1)) node1_idx = i;
@@ -206,5 +191,5 @@ void SchematicEditor::registerLogicalConnection(TerminalItem* term1, TerminalIte
     } else {
         m_logicalNodes.push_back({term1, term2});
     }
-    qDebug() << "Logical connection registered.";
+    qDebug() << "Logical connection registered. Total nodes:" << m_logicalNodes.size();
 }

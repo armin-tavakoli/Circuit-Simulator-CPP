@@ -1,0 +1,26 @@
+[33m7b1c2c0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Start of Phase 2
+[33mb593ad2[m the final for phase1
+[33m7b3315f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m final commit for TA
+[33m20627e9[m Commit for TA
+[33maad5d6e[m last update of menu
+[33mb252bca[m final commit
+[33m5c839c1[m full code
+[33m2a7528d[m last update of menu
+[33ma98605d[m Implement errors
+[33mcbbdcf3[m mohammads commits
+[33m897f5ff[m mohammads commits
+[33m3420e2d[m mohammads commits
+[33m561e071[m mohammads commits
+[33m60a377d[m mohammads commit
+[33m9664d39[m mohammads commit
+[33m1882161[m DC sweep bug FIXED
+[33m05bad85[m Implement Vpulse sources
+[33m8f258b5[m feat: Implement advanced transient analysis
+[33m7338853[m feat: Implement DC Sweep analysis
+[33m92ffa38[m feat: Implement all 4 dependent sources (VCVS, VCCS, CCVS, CCCS)
+[33ma9dbbdc[m feat: Implement Independent Current Source component
+[33m673ae6a[m feat: Add support for multiple diode models (Standard and Zener)
+[33me2b70c3[m feat: Implement GND nodes
+[33m21b1e48[m feat: Implement Diode and Newton-Raphson solver
+[33mcb9ebaf[m feat: Implement 'rename node' and 'print' commands
+[33mf9d8a09[m Initial stable version with netlist support
