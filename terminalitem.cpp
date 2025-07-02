@@ -1,17 +1,16 @@
 #include "terminalitem.h"
 #include "componentitem.h"
+#include "polylinewireitem.h" // Include the full header
 #include <QPainter>
 
 TerminalItem::TerminalItem(ComponentItem *parent, int terminalId)
-// حالا که کامپایلر ارث‌بری را می‌شناسد، این خط به درستی کار می‌کند
         : QGraphicsItem(parent), parentComponent(parent), id(terminalId)
 {
-    setAcceptHoverEvents(true); // فعال کردن رویداد هاور
+    setAcceptHoverEvents(true);
 }
 
 QRectF TerminalItem::boundingRect() const
 {
-    // یک مربع کوچک برای دایره
     return QRectF(-4, -4, 8, 8);
 }
 
@@ -20,7 +19,6 @@ void TerminalItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     Q_UNUSED(option);
     Q_UNUSED(widget);
 
-    // اگر ماوس روی آن باشد، رنگ را تغییر بده
     if (isHovered) {
         painter->setBrush(Qt::yellow);
     } else {
@@ -33,13 +31,38 @@ void TerminalItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 void TerminalItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     isHovered = true;
-    update(); // درخواست رسم مجدد برای تغییر رنگ
+    update();
     QGraphicsItem::hoverEnterEvent(event);
 }
 
 void TerminalItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
     isHovered = false;
-    update(); // درخواست رسم مجدد برای تغییر رنگ
+    update();
     QGraphicsItem::hoverLeaveEvent(event);
+}
+
+// Implementation of new methods
+void TerminalItem::addWire(PolylineWireItem *wire)
+{
+    if (!m_wires.contains(wire)) {
+        m_wires.append(wire);
+    }
+}
+
+void TerminalItem::removeWire(PolylineWireItem *wire)
+{
+    m_wires.removeAll(wire);
+}
+
+const QList<PolylineWireItem*>& TerminalItem::getWires() const
+{
+    return m_wires;
+}
+
+void TerminalItem::updateConnectedWires()
+{
+    for (PolylineWireItem* wire : m_wires) {
+        wire->updatePosition();
+    }
 }

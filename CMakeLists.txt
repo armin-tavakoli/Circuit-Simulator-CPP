@@ -41,6 +41,11 @@ add_executable(circuit_simulator
         dependentsourceitems.h
         dependentsourceitems.cpp
 
+        # آیتم‌های جدید برای سیم‌کشی
+        polylinewireitem.h      # کلاس جدید برای سیم
+        polylinewireitem.cpp
+        junctionitem.h          # کلاس جدید برای نقطه اتصال
+
         # فایل‌های بک‌اند
         Circuit.h
         Circuit.cpp

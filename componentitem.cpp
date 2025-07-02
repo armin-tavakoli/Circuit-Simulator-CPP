@@ -2,6 +2,7 @@
 #include "terminalitem.h"
 #include <cmath>
 #include <QDebug>
+#include <QTimer>
 
 ComponentItem::ComponentItem(Component *component, QGraphicsItem *parent)
         : QGraphicsObject(parent), logicalComponent(component)
@@ -13,6 +14,9 @@ ComponentItem::ComponentItem(Component *component, QGraphicsItem *parent)
     m_terminal1 = new TerminalItem(this, 0);
     m_terminal2 = new TerminalItem(this, 1);
 }
+
+// The redundant destructor definition is removed from this file.
+// The one in componentitem.h is sufficient.
 
 QRectF ComponentItem::boundingRect() const
 {
@@ -39,6 +43,12 @@ QVariant ComponentItem::itemChange(GraphicsItemChange change, const QVariant &va
         qreal x = round(newPos.x() / gridSize) * gridSize;
         qreal y = round(newPos.y() / gridSize) * gridSize;
         QPointF snappedPos(x, y);
+
+        QTimer::singleShot(0, this, [this]() {
+            if (m_terminal1) m_terminal1->updateConnectedWires();
+            if (m_terminal2 && m_terminal2->isVisible()) m_terminal2->updateConnectedWires();
+        });
+
         return snappedPos;
     }
     return QGraphicsItem::itemChange(change, value);

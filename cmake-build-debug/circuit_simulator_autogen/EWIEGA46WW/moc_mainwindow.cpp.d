@@ -188,6 +188,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/src/plugins/MatrixCwiseUnaryOps.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/src/plugins/ReshapedMethods.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/schematiceditor.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QList \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \

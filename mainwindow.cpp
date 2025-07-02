@@ -62,6 +62,11 @@ void MainWindow::setupMenus()
     editMenu->addSeparator();
     editMenu->addAction(tr("Add &Ground"), this, &MainWindow::onAddGround);
 
+    editMenu->addSeparator();
+    QAction* wireAction = editMenu->addAction(tr("Add &Wire"));
+    wireAction->setCheckable(true);
+    connect(wireAction, &QAction::toggled, editor, &SchematicEditor::toggleWiringMode);
+
     menuBar()->addMenu(tr("&Simulate"));
     menuBar()->addMenu(tr("&View"));
     menuBar()->addMenu(tr("Sco&pe"));

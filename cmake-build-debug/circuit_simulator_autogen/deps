@@ -246,9 +246,12 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/grounditem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/inductoritem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/inductoritem.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/junctionitem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/main.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/polylinewireitem.cpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/polylinewireitem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/resistoritem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/resistoritem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/schematiceditor.cpp \
@@ -257,6 +260,7 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/terminalitem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/voltagesourceitem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/voltagesourceitem.h \
+	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QList \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \

@@ -7,6 +7,8 @@
 #include "Circuit.h"
 #include "schematiceditor.h"
 
+class QAction;
+
 class MainWindow : public QMainWindow
 {
 Q_OBJECT

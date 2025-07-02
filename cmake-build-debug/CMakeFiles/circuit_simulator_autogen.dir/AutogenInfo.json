@@ -400,9 +400,21 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/junctionitem.h",
+			"MU",
+			"EWIEGA46WW/moc_junctionitem.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/mainwindow.h",
 			"MU",
 			"EWIEGA46WW/moc_mainwindow.cpp",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/polylinewireitem.h",
+			"MU",
+			"EWIEGA46WW/moc_polylinewireitem.cpp",
 			null
 		],
 		[
@@ -553,6 +565,11 @@
 		],
 		[
 			"D:/Course/Current courses/OOP/circuit_simulator/mainwindow.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/polylinewireitem.cpp",
 			"MU",
 			null
 		],
