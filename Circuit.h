@@ -27,11 +27,17 @@ public:
     void runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars);
     Component* findComponent(const string& name);
 
+    // <<< تابع جدید برای دسترسی به نتایج >>>
+    const map<string, vector<double>>& getSimulationResults() const;
+
 private:
     vector<unique_ptr<Component>> components;
     map<string, int> currentComponentMap;
     int nodeCount = 0;
     int currentVarCount = 0;
+
+    // <<< متغیر جدید برای نگهداری نتایج >>>
+    map<string, vector<double>> simulationResults;
 
     void analyzeCircuit();
     void checkConnectivity() const;

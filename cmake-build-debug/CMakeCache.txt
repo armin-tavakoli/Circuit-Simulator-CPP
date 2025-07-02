@@ -27,8 +27,8 @@ CMAKE_BUILD_TYPE:STRING=Debug
 //Enable colored diagnostics throughout.
 CMAKE_COLOR_DIAGNOSTICS:BOOL=ON
 
-//No help, variable specified on the command line.
-CMAKE_CXX_COMPILER:UNINITIALIZED=D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/bin/g++.exe
+//CXX compiler
+CMAKE_CXX_COMPILER:STRING=D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/bin/g++.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -56,8 +56,8 @@ CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 //Libraries linked by default with all C++ applications.
 CMAKE_CXX_STANDARD_LIBRARIES:STRING=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
 
-//No help, variable specified on the command line.
-CMAKE_C_COMPILER:UNINITIALIZED=D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/bin/gcc.exe
+//C compiler
+CMAKE_C_COMPILER:STRING=D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/bin/gcc.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -167,7 +167,7 @@ CMAKE_INSTALL_SYSCONFDIR:PATH=etc
 CMAKE_LINKER:FILEPATH=D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/bin/ld.exe
 
 //make program
-CMAKE_MAKE_PROGRAM:FILEPATH=C:/PROGRA~1/JETBRA~1/CLION2~1.3/bin/ninja/win/x64/ninja.exe
+CMAKE_MAKE_PROGRAM:FILEPATH=C:/Program Files/JetBrains/CLion 2024.3.3/bin/ninja/win/x64/ninja.exe
 
 //Flags used by the linker during the creation of modules during
 // all build types.
@@ -300,6 +300,12 @@ QT_ADDITIONAL_HOST_PACKAGES_PREFIX_PATH:STRING=
 //Additional directories where find(Qt6 ...) components are searched
 QT_ADDITIONAL_PACKAGES_PREFIX_PATH:STRING=
 
+//The directory containing a CMake configuration file for Qt6ChartsPrivate.
+Qt6ChartsPrivate_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6ChartsPrivate
+
+//The directory containing a CMake configuration file for Qt6Charts.
+Qt6Charts_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Charts
+
 //The directory containing a CMake configuration file for Qt6CorePrivate.
 Qt6CorePrivate_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6CorePrivate
 
@@ -320,6 +326,18 @@ Qt6GuiTools_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt
 
 //The directory containing a CMake configuration file for Qt6Gui.
 Qt6Gui_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Gui
+
+//The directory containing a CMake configuration file for Qt6OpenGLPrivate.
+Qt6OpenGLPrivate_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6OpenGLPrivate
+
+//The directory containing a CMake configuration file for Qt6OpenGLWidgetsPrivate.
+Qt6OpenGLWidgetsPrivate_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6OpenGLWidgetsPrivate
+
+//The directory containing a CMake configuration file for Qt6OpenGLWidgets.
+Qt6OpenGLWidgets_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6OpenGLWidgets
+
+//The directory containing a CMake configuration file for Qt6OpenGL.
+Qt6OpenGL_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6OpenGL
 
 //The directory containing a CMake configuration file for Qt6WidgetsPrivate.
 Qt6WidgetsPrivate_DIR:PATH=D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6WidgetsPrivate
@@ -619,6 +637,24 @@ QT_FEATURE_calendarwidget:INTERNAL=ON
 QT_FEATURE_cborstreamreader:INTERNAL=ON
 //Qt feature: cborstreamwriter (from target Qt6::Core)
 QT_FEATURE_cborstreamwriter:INTERNAL=ON
+//Qt feature: charts_area_chart (from target Qt6::Charts)
+QT_FEATURE_charts_area_chart:INTERNAL=ON
+//Qt feature: charts_bar_chart (from target Qt6::Charts)
+QT_FEATURE_charts_bar_chart:INTERNAL=ON
+//Qt feature: charts_boxplot_chart (from target Qt6::Charts)
+QT_FEATURE_charts_boxplot_chart:INTERNAL=ON
+//Qt feature: charts_candlestick_chart (from target Qt6::Charts)
+QT_FEATURE_charts_candlestick_chart:INTERNAL=ON
+//Qt feature: charts_datetime_axis (from target Qt6::Charts)
+QT_FEATURE_charts_datetime_axis:INTERNAL=ON
+//Qt feature: charts_line_chart (from target Qt6::Charts)
+QT_FEATURE_charts_line_chart:INTERNAL=ON
+//Qt feature: charts_pie_chart (from target Qt6::Charts)
+QT_FEATURE_charts_pie_chart:INTERNAL=ON
+//Qt feature: charts_scatter_chart (from target Qt6::Charts)
+QT_FEATURE_charts_scatter_chart:INTERNAL=ON
+//Qt feature: charts_spline_chart (from target Qt6::Charts)
+QT_FEATURE_charts_spline_chart:INTERNAL=ON
 //Qt feature: checkbox (from target Qt6::Widgets)
 QT_FEATURE_checkbox:INTERNAL=ON
 //Qt feature: clipboard (from target Qt6::Gui)

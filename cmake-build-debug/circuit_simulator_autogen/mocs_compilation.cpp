@@ -2,3 +2,4 @@
 #include "EWIEGA46WW/moc_componentitem.cpp"
 #include "EWIEGA46WW/moc_mainwindow.cpp"
 #include "EWIEGA46WW/moc_schematiceditor.cpp"
+#include "EWIEGA46WW/moc_scopewindow.cpp"

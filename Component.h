@@ -23,7 +23,13 @@ public:
     string getName() const { return name; }
     int getNode1() const { return node1; }
     int getNode2() const { return node2; }
+
+    // تابع قدیمی برای تغییر نام یک گره در کل مدار
     void updateNode(int oldNode, int newNode);
+
+    // <<< تابع جدید برای تنظیم مستقیم گره‌های این قطعه >>>
+    void setNodes(int n1, int n2);
+
     void setCtrlCurrentIdx(int idx) { ctrlCurrentIdx = idx; }
     virtual string getCtrlVName() const { return ""; }
     virtual void set_dc_value(double val) {}
@@ -35,6 +41,7 @@ protected:
     int ctrlCurrentIdx;
 };
 
+// ... بقیه کلاس‌ها بدون تغییر ...
 class Resistor : public Component {
 public:
     Resistor(const string& name, int n1, int n2, double res);

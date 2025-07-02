@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+# <<< ماژول Charts به این خط اضافه شد >>>
+find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
 
 include_directories(${CMAKE_SOURCE_DIR}/eigen-3.4.0)
 
@@ -40,11 +41,13 @@ add_executable(circuit_simulator
         currentsourceitem.cpp
         dependentsourceitems.h
         dependentsourceitems.cpp
-
-        # آیتم‌های جدید برای سیم‌کشی
-        polylinewireitem.h      # کلاس جدید برای سیم
+        polylinewireitem.h
         polylinewireitem.cpp
-        junctionitem.h          # کلاس جدید برای نقطه اتصال
+        junctionitem.h
+
+        # <<< فایل‌های جدید برای پنجره Scope >>>
+        scopewindow.h
+        scopewindow.cpp
 
         # فایل‌های بک‌اند
         Circuit.h
@@ -58,4 +61,5 @@ add_executable(circuit_simulator
         ValueParser.h
 )
 
-target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets)
+# <<< کتابخانه Charts به این خط اضافه شد >>>
+target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets Qt6::Charts)

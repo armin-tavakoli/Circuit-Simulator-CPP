@@ -1,11 +1,19 @@
 #include "Component.h"
 #include <iostream>
 #include <cmath>
+#include <sstream> // Required for stringstream
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
+// <<< پیاده‌سازی تابع جدید >>>
+void Component::setNodes(int n1, int n2) {
+    this->node1 = n1;
+    this->node2 = n2;
+}
+
+// Print methods for each component type
 void Resistor::print() const { cout << "Type: Resistor, Name: " << name << ", Nodes: (" << node1 << "," << node2 << "), R=" << resistance << " Ohms" << endl; }
 void Capacitor::print() const { cout << "Type: Capacitor, Name: " << name << ", Nodes: (" << node1 << "," << node2 << "), C=" << capacitance << " F" << endl; }
 void VoltageSource::print() const { cout << "Type: DC Source, Name: " << name << ", Nodes: (" << node1 << "," << node2 << "), V=" << voltage << " V" << endl; }
@@ -41,6 +49,7 @@ void CCCS::print() const {
          << "), Control Current: I(" << ctrlVName << "), Gain=" << gain << endl;
 }
 
+// Constructors
 Resistor::Resistor(const string& name, int n1, int n2, double res) : Component(name, n1, n2), resistance(res) {}
 Capacitor::Capacitor(const string& name, int n1, int n2, double cap) : Component(name, n1, n2), capacitance(cap), prev_voltage(0.0) {}
 VoltageSource::VoltageSource(const string& name, int n1, int n2, double vol) : Component(name, n1, n2), voltage(vol) {}
@@ -58,9 +67,10 @@ VCVS::VCVS(const string& name, int n1, int n2, int ctrl_n1, int ctrl_n2, double 
 VCCS::VCCS(const string& name, int n1, int n2, int ctrl_n1, int ctrl_n2, double gain) : Component(name, n1, n2), ctrlNode1(ctrl_n1), ctrlNode2(ctrl_n2), gain(gain) {}
 CCVS::CCVS(const string& name, int n1, int n2, const string& vctrl_name, double gain) : Component(name, n1, n2), ctrlVName(vctrl_name), gain(gain) {}
 CCCS::CCCS(const string& name, int n1, int n2, const string& vctrl_name, double gain) : Component(name, n1, n2), ctrlVName(vctrl_name), gain(gain) {}
-
 PulseVoltageSource::PulseVoltageSource(const string& name, int n1, int n2, double v1, double v2, double td, double tr, double tf, double pw, double per)
         : VoltageSource(name, n1, n2, v1), v_initial(v1), v_pulsed(v2), t_delay(td), t_rise(tr), t_fall(tf), t_pulse_width(pw), t_period(per) {}
+
+// Stamping functions for MNA
 void Resistor::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     double g = 1.0 / resistance;
     int n1 = node1 - 1;
@@ -206,6 +216,7 @@ void CCCS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int curren
     }
 }
 
+// Node update functions
 void Component::updateNode(int oldNode, int newNode) {
     if (node1 == oldNode) node1 = newNode;
     if (node2 == oldNode) node2 = newNode;
@@ -223,6 +234,7 @@ void VCCS::updateCtrlNodes(int oldNode, int newNode) {
     if (ctrlNode2 == oldNode) ctrlNode2 = newNode;
 }
 
+// PULSE source voltage calculation
 double PulseVoltageSource::calculate_voltage_at(double t) const {
     if (t_period <= 0) {
         if (t <= t_delay) return v_initial;
@@ -245,6 +257,8 @@ double PulseVoltageSource::calculate_voltage_at(double t) const {
     if (t_fall > 0 && t <= t_fall) return v_pulsed + (v_initial - v_pulsed) * t / t_fall;
     return v_initial;
 }
+
+// Netlist string generation
 string Resistor::toNetlistString() const {
     return name + " " + to_string(node1) + " " + to_string(node2) + " " + to_string(resistance);
 }

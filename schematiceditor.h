@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <QList>
+#include <map> // برای نگاشت پایانه‌ها به شماره گره
 
 // Forward declarations
 class TerminalItem;
@@ -12,13 +13,19 @@ class PolylineWireItem;
 class JunctionItem;
 class QGraphicsLineItem;
 class QMouseEvent;
+class Circuit; // <<<
+class ComponentItem; // <<<
 
 class SchematicEditor : public QGraphicsView
 {
 Q_OBJECT
 
 public:
-    explicit SchematicEditor(QWidget *parent = nullptr);
+    // <<< سازنده تغییر می‌کند >>>
+    explicit SchematicEditor(Circuit* circuit, QWidget *parent = nullptr);
+
+    // <<< تابع عمومی جدید برای فراخوانی از بیرون >>>
+    void updateBackendNodes();
 
 public slots:
     void toggleWiringMode(bool enabled);
@@ -36,6 +43,7 @@ private:
     };
 
     WiringState m_wiringState;
+    Circuit* m_circuit; // <<< اشاره‌گر به بک‌اند
 
     PolylineWireItem *m_currentWire = nullptr;
     QList<QGraphicsLineItem*> m_tempPreviewSegments;
@@ -44,7 +52,7 @@ private:
 
     // Helper functions
     TerminalItem* getTerminalAt(const QPoint& pos);
-    PolylineWireItem* getWireAt(const QPoint& pos); // <<< این خط اضافه شد
+    PolylineWireItem* getWireAt(const QPoint& pos);
     QPointF snapToGrid(const QPointF& pos);
     void registerLogicalConnection(TerminalItem* term1, TerminalItem* term2);
 };

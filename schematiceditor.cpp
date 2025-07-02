@@ -6,9 +6,13 @@
 #include "terminalitem.h"
 #include "polylinewireitem.h"
 #include "junctionitem.h"
+#include "componentitem.h"
+#include "Circuit.h"
+#include "grounditem.h" // <<< این خط برای رفع خطا اضافه شد
 
-SchematicEditor::SchematicEditor(QWidget *parent)
-        : QGraphicsView(parent)
+// <<< سازنده تغییر می‌کند >>>
+SchematicEditor::SchematicEditor(Circuit* circuit, QWidget *parent)
+        : QGraphicsView(parent), m_circuit(circuit)
 {
     setScene(new QGraphicsScene(this));
     scene()->setSceneRect(-5000, -5000, 10000, 10000);
@@ -17,6 +21,62 @@ SchematicEditor::SchematicEditor(QWidget *parent)
     m_wiringState = WiringState::NotWiring;
 }
 
+// <<< پیاده‌سازی تابع اصلی >>>
+void SchematicEditor::updateBackendNodes()
+{
+    if (!m_circuit) return;
+
+    // نقشه برای نگهداری شماره گره هر پایانه
+    std::map<TerminalItem*, int> terminalNodeMap;
+    int nextNodeId = 1; // شماره گره از ۱ شروع می‌شود (۰ برای زمین است)
+
+    // ۱. به هر گروه از پایانه‌های متصل، یک شماره گره اختصاص بده
+    for (const auto& nodeSet : m_logicalNodes) {
+        bool isGroundNode = false;
+        // چک کن آیا این گره شامل زمین است یا نه
+        for (TerminalItem* term : nodeSet) {
+            if (dynamic_cast<GroundItem*>(term->parentItem())) {
+                isGroundNode = true;
+                break;
+            }
+        }
+
+        int currentNodeId = isGroundNode ? 0 : nextNodeId++;
+
+        for (TerminalItem* term : nodeSet) {
+            terminalNodeMap[term] = currentNodeId;
+        }
+    }
+
+    // ۲. گره‌های قطعات منطقی را در بک‌اند به‌روز کن
+    for (QGraphicsItem* item : scene()->items()) {
+        if (auto compItem = dynamic_cast<ComponentItem*>(item)) {
+            Component* logicComp = compItem->getComponent();
+            if (!logicComp) continue;
+
+            TerminalItem* t1 = compItem->terminal1();
+            TerminalItem* t2 = compItem->terminal2();
+
+            int n1 = -1, n2 = -1; // گره‌های پیش‌فرض نامعتبر
+
+            if (terminalNodeMap.count(t1)) {
+                n1 = terminalNodeMap[t1];
+            }
+            if (t2->isVisible() && terminalNodeMap.count(t2)) {
+                n2 = terminalNodeMap[t2];
+            } else if (!t2->isVisible()) { // برای قطعاتی مثل زمین که یک پایانه دارند
+                n2 = 0; // پایانه دوم به زمین متصل است
+            }
+
+            logicComp->setNodes(n1, n2);
+            qDebug() << "Updated component" << QString::fromStdString(logicComp->getName()) << "to nodes" << n1 << n2;
+        }
+    }
+    qDebug() << "Backend nodes updated!";
+}
+
+
+// بقیه توابع کلاس بدون تغییر باقی می‌مانند
 void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
 {
     QGraphicsView::drawBackground(painter, rect);

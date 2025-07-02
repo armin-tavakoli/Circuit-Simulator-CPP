@@ -7,7 +7,8 @@
 #include "Circuit.h"
 #include "schematiceditor.h"
 
-class QAction;
+// <<<
+class ScopeWindow;
 
 class MainWindow : public QMainWindow
 {
@@ -31,6 +32,7 @@ private slots:
     void onAddVCCS();
     void onAddCCVS();
     void onAddCCCS();
+    void onRunSimulation();
 
 private:
     void setupMenus();
@@ -38,6 +40,7 @@ private:
 
     SchematicEditor *editor;
     Circuit circuit;
+    ScopeWindow *m_scopeWindow = nullptr; // <<<
 
     std::map<std::string, int> componentCounters;
 };
