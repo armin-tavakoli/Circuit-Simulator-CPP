@@ -6,7 +6,9 @@
 #include <set>
 #include <QList>
 #include <map>
+#include <QKeyEvent> // <-- ۱. هدر رویدادهای کیبورد را اضافه کنید
 
+// Forward declarations
 class TerminalItem;
 class PolylineWireItem;
 class JunctionItem;
@@ -21,7 +23,6 @@ Q_OBJECT
 
 public:
     explicit SchematicEditor(Circuit* circuit, QWidget *parent = nullptr);
-
     void populateSceneFromCircuit();
     void updateCircuitWires();
     void updateBackendNodes();
@@ -35,22 +36,21 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
 
-private:
-    enum class WiringState {
-        NotWiring,
-        DrawingWire
-    };
+    // --- ۲. تعریف تابع جدید برای مدیریت رویدادهای کیبورد ---
+    void keyPressEvent(QKeyEvent *event) override;
 
+private:
+    enum class WiringState { NotWiring, DrawingWire };
     WiringState m_wiringState;
     Circuit* m_circuit;
     PolylineWireItem *m_currentWire = nullptr;
     QList<QGraphicsLineItem*> m_tempPreviewSegments;
     std::vector<std::set<TerminalItem*>> m_logicalNodes;
 
+    // Helper Functions
     TerminalItem* getTerminalAt(const QPoint& pos);
     QPointF snapToGrid(const QPointF& pos);
     void registerLogicalConnection(TerminalItem* term1, TerminalItem* term2);
-
     void cancelWiring();
     void clearPreviewSegments();
 };

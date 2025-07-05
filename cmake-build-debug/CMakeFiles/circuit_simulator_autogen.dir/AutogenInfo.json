@@ -511,6 +511,12 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/transientdialog.h",
+			"MU",
+			"EWIEGA46WW/moc_transientdialog.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/voltagesourceitem.h",
 			"MU",
 			"EWIEGA46WW/moc_voltagesourceitem.cpp",
@@ -677,6 +683,11 @@
 		],
 		[
 			"D:/Course/Current courses/OOP/circuit_simulator/terminalitem.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/transientdialog.cpp",
 			"MU",
 			null
 		],

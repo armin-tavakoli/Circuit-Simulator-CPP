@@ -204,7 +204,11 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/vector.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/schematiceditor.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QList \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QObject \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QPointF \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QRect \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QSize \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QSizeF \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \
@@ -212,6 +216,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20type_traits.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20utility.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q23utility.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qalgorithms.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qanystringview.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qarraydata.h \
@@ -221,6 +226,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qatomic.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qatomic_cxx11.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbasicatomic.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbasictimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbindingstorage.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbytearray.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbytearrayalgorithms.h \
@@ -237,10 +243,16 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcontainerinfo.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcontainertools_impl.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcontiguouscache.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcoreapplication.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcoreevent.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdarwinhelpers.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdatastream.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdeadlinetimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdebug.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qelapsedtimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qendian.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qeventloop.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qexceptionhandling.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qflags.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qfloat16.h \
@@ -252,12 +264,14 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qglobalstatic.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qhash.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qhashfunctions.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiodevice.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiodevicebase.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiterable.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiterator.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qlatin1stringview.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qline.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qlist.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qlocale.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qlogging.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qmalloc.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qmap.h \
@@ -267,6 +281,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qmetatype.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qminmax.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qnamespace.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qnativeinterface.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qnumeric.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qobject.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qobject_impl.h \
@@ -324,23 +339,32 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtversionchecks.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtypeinfo.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtypes.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qurl.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qutf8stringview.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qvariant.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qvarlengtharray.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qversiontagging.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qxptype_traits.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qyieldcpu.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/QKeyEvent \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/QTransform \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qaction.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qbitmap.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qbrush.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qcolor.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qcursor.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qevent.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qeventpoint.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qfont.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qfontinfo.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qfontmetrics.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qfontvariableaxis.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qguiapplication.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qguiapplication_platform.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qicon.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qimage.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qinputdevice.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qinputmethod.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qkeysequence.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpaintdevice.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpainter.h \
@@ -348,15 +372,20 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpen.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpixelformat.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpixmap.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpointingdevice.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qpolygon.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qregion.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qrgb.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qrgba64.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qscreen.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qscreen_platform.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qtextoption.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qtgui-config.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qtguiexports.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qtguiglobal.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qtransform.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qvector2d.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qvectornd.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qwindowdefs.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qwindowdefs_win.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/QGraphicsView \

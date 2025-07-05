@@ -4,3 +4,4 @@
 #include "EWIEGA46WW/moc_propertiesdialog.cpp"
 #include "EWIEGA46WW/moc_schematiceditor.cpp"
 #include "EWIEGA46WW/moc_scopewindow.cpp"
+#include "EWIEGA46WW/moc_transientdialog.cpp"

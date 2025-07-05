@@ -59,6 +59,8 @@ add_executable(circuit_simulator
         propertiesdialog.cpp
         propertiesdialog.h
         cereal_registration.h
+        transientdialog.h
+        transientdialog.cpp
 )
 
 target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets Qt6::Charts)

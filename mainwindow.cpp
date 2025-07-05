@@ -8,6 +8,8 @@
 #include "dependentsourceitems.h"
 #include "scopewindow.h"
 #include "propertiesdialog.h"
+#include "transientdialog.h" // فراخوانی هدر دیالوگ جدید
+
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
@@ -38,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     componentCounters["G"] = 1;
     componentCounters["H"] = 1;
     componentCounters["F"] = 1;
+    componentCounters["GND"] = 1;
 }
 
 MainWindow::~MainWindow()
@@ -104,6 +107,7 @@ void MainWindow::onFileSave()
         }
     }
     editor->updateCircuitWires();
+
     QString filePath = QFileDialog::getSaveFileName(this, "Save Circuit", "", "Circuit Files (*.cir)");
     if (!filePath.isEmpty()) {
         try {
@@ -121,9 +125,7 @@ void MainWindow::onFileOpen()
     if (!filePath.isEmpty()) {
         try {
             circuit.loadFromFile(filePath.toStdString());
-
             editor->populateSceneFromCircuit();
-
             QMessageBox::information(this, "Success", "Circuit loaded successfully!");
         } catch (const std::exception& e) {
             QMessageBox::critical(this, "Load Error", e.what());
@@ -133,20 +135,26 @@ void MainWindow::onFileOpen()
 
 void MainWindow::onRunSimulation()
 {
-    editor->updateBackendNodes();
+    TransientAnalysisDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        double stopTime = dialog.getStopTime();
+        double startTime = dialog.getStartTime();
+        double timeStep = dialog.getTimeStep();
 
-    try {
-        circuit.runTransientAnalysis(1e-3, 1e-6);
+        editor->updateBackendNodes();
+        try {
+            circuit.runTransientAnalysis(stopTime, timeStep, {}, startTime);
 
-        if (m_scopeWindow) {
-            m_scopeWindow->close();
-            delete m_scopeWindow;
+            if (m_scopeWindow) {
+                m_scopeWindow->close();
+                delete m_scopeWindow;
+            }
+            m_scopeWindow = new ScopeWindow(circuit.getSimulationResults(), this);
+            m_scopeWindow->show();
+
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Simulation Error", e.what());
         }
-        m_scopeWindow = new ScopeWindow(circuit.getSimulationResults(), this);
-        m_scopeWindow->show();
-
-    } catch (const std::exception& e) {
-        QMessageBox::critical(this, "Simulation Error", e.what());
     }
 }
 

@@ -3,6 +3,8 @@
 #include <QGraphicsScene>
 #include <QMouseEvent>
 #include <QDebug>
+#include <QKeyEvent>
+#include <QSet>
 #include <cmath>
 #include "terminalitem.h"
 #include "polylinewireitem.h"
@@ -155,7 +157,6 @@ void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
 
 void SchematicEditor::mousePressEvent(QMouseEvent *event)
 {
-    // لغو عملیات با کلیک راست
     if (event->button() == Qt::RightButton && m_wiringState == WiringState::DrawingWire) {
         cancelWiring();
         return;
@@ -173,24 +174,20 @@ void SchematicEditor::mousePressEvent(QMouseEvent *event)
         if (event->button() == Qt::LeftButton) {
             QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
             if (auto endTerminal = getTerminalAt(event->pos())) {
-                // کلیک روی یک پایانه برای اتمام سیم‌کشی
                 if (endTerminal != m_currentWire->getStartTerminal()) {
                     TerminalItem* startTerm = m_currentWire->getStartTerminal();
                     QPointF lastP = m_currentWire->lastPoint();
                     m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
                     m_currentWire->setEndTerminal(endTerminal);
 
-                    // سیم اکنون دائمی است. حالت را ریست می‌کنیم بدون اینکه سیم را پاک کنیم.
                     m_currentWire = nullptr;
                     m_wiringState = WiringState::NotWiring;
 
                     registerLogicalConnection(startTerm, endTerminal);
                 } else {
-                    // کلیک مجدد روی پایانه شروع، عملیات را لغو می‌کند
                     cancelWiring();
                 }
             } else {
-                // کلیک روی فضای خالی برای افزودن یک گوشه (شکست) به سیم
                 QPointF lastP = m_currentWire->lastPoint();
                 m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
                 m_currentWire->addPoint(snappedPos);
@@ -198,7 +195,6 @@ void SchematicEditor::mousePressEvent(QMouseEvent *event)
         }
     }
 
-    // پاک کردن خطوط پیش‌نمایش موقت
     clearPreviewSegments();
     QGraphicsView::mousePressEvent(event);
 }
@@ -227,7 +223,6 @@ void SchematicEditor::mouseMoveEvent(QMouseEvent *event)
 
 void SchematicEditor::toggleWiringMode(bool enabled)
 {
-    // این تابع اکنون فقط برای لغو عملیات از خارج کلاس استفاده می‌شود
     if (!enabled) {
         cancelWiring();
     }
@@ -297,4 +292,49 @@ QPointF SchematicEditor::snapToGrid(const QPointF& pos)
 void SchematicEditor::mouseReleaseEvent(QMouseEvent *event)
 {
     QGraphicsView::mouseReleaseEvent(event);
+}
+
+void SchematicEditor::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete) {
+        QList<QGraphicsItem*> selected = scene()->selectedItems();
+        if (selected.isEmpty()) {
+            QGraphicsView::keyPressEvent(event);
+            return;
+        }
+
+        QSet<PolylineWireItem*> wiresToDelete;
+
+        for (QGraphicsItem* item : selected) {
+            if (auto compItem = qgraphicsitem_cast<ComponentItem*>(item)) {
+                for (auto wire : compItem->terminal1()->getWires()) {
+                    wiresToDelete.insert(wire);
+                }
+                if (compItem->terminal2()->isVisible()) {
+                    for (auto wire : compItem->terminal2()->getWires()) {
+                        wiresToDelete.insert(wire);
+                    }
+                }
+            } else if (auto wireItem = qgraphicsitem_cast<PolylineWireItem*>(item)) {
+                wiresToDelete.insert(wireItem);
+            }
+        }
+
+        for (PolylineWireItem* wire : wiresToDelete) {
+            scene()->removeItem(wire);
+            delete wire;
+        }
+
+        for (QGraphicsItem* item : selected) {
+            if (auto compItem = qgraphicsitem_cast<ComponentItem*>(item)) {
+                if (compItem->getComponent()) {
+                    m_circuit->removeComponent(compItem->getComponent()->getName());
+                }
+                scene()->removeItem(compItem);
+                delete compItem;
+            }
+        }
+    } else {
+        QGraphicsView::keyPressEvent(event);
+    }
 }
