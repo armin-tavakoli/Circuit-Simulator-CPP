@@ -8,7 +8,6 @@
 #include "dependentsourceitems.h"
 #include "scopewindow.h"
 #include "propertiesdialog.h"
-
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
@@ -17,7 +16,7 @@
 #include <QToolBar>
 #include <QPushButton>
 #include <utility>
-#include <QFileDialog> // برای باز کردن دیالوگ فایل
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent)
@@ -49,9 +48,8 @@ void MainWindow::setupMenus()
 {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(tr("&New"), this, &MainWindow::onFileNew);
-    // اتصال اکشن‌های منو به اسلات‌های صحیح
     fileMenu->addAction(tr("&Open..."), this, &MainWindow::onFileOpen);
-    fileMenu->addAction(tr("&Save..."), this, &MainWindow::onFileSave); // تغییر نام به Save...
+    fileMenu->addAction(tr("&Save..."), this, &MainWindow::onFileSave);
     fileMenu->addSeparator();
     fileMenu->addAction(tr("E&xit"), this, &QWidget::close);
 
@@ -89,12 +87,23 @@ void MainWindow::setupMenus()
     menuBar()->addMenu(tr("&Help"));
 }
 
-// ======================================================================
-// پیاده‌سازی صحیح اسلات‌های ذخیره و بازیابی
-// ======================================================================
+void MainWindow::onFileNew()
+{
+    circuit.clear();
+    editor->populateSceneFromCircuit();
+    QMessageBox::information(this, "Action", "New circuit created.");
+}
 
 void MainWindow::onFileSave()
 {
+    for (QGraphicsItem* item : editor->scene()->items()) {
+        if (auto compItem = dynamic_cast<ComponentItem*>(item)) {
+            if (auto logicComp = compItem->getComponent()) {
+                logicComp->setPosition(compItem->pos().x(), compItem->pos().y());
+            }
+        }
+    }
+    editor->updateCircuitWires();
     QString filePath = QFileDialog::getSaveFileName(this, "Save Circuit", "", "Circuit Files (*.cir)");
     if (!filePath.isEmpty()) {
         try {
@@ -112,15 +121,15 @@ void MainWindow::onFileOpen()
     if (!filePath.isEmpty()) {
         try {
             circuit.loadFromFile(filePath.toStdString());
-            // TODO: بازسازی صحنه گرافیکی بر اساس مدار بارگذاری شده
-            // editor->recreateSceneFromCircuit(); // این تابع باید پیاده‌سازی شود
-            QMessageBox::information(this, "Success", "Circuit loaded successfully!\n(Graphical view not updated yet)");
+
+            editor->populateSceneFromCircuit();
+
+            QMessageBox::information(this, "Success", "Circuit loaded successfully!");
         } catch (const std::exception& e) {
             QMessageBox::critical(this, "Load Error", e.what());
         }
     }
 }
-
 
 void MainWindow::onRunSimulation()
 {
@@ -148,16 +157,6 @@ std::string MainWindow::getNextComponentName(const std::string& prefix)
     return prefix + std::to_string(count);
 }
 
-// تابع onFileNew بدون تغییر باقی می‌ماند
-void MainWindow::onFileNew() {
-    // TODO: پاک کردن مدار فعلی و صحنه گرافیکی
-    circuit.clear();
-    editor->scene()->clear();
-    QMessageBox::information(this, "Action", "New circuit created.");
-}
-
-
-// بقیه توابع onAdd... بدون تغییر باقی می‌مانند
 void MainWindow::onAddResistor()
 {
     string name = getNextComponentName("R");
@@ -205,8 +204,11 @@ void MainWindow::onAddCurrentSource()
 
 void MainWindow::onAddGround()
 {
-    auto ground_item = new GroundItem();
-    editor->scene()->addItem(ground_item);
+    string name = getNextComponentName("GND");
+    auto logic_comp = make_unique<Ground>(name, 0, 0);
+    Component* ptr = logic_comp.get();
+    circuit.addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new GroundItem(ptr));
 }
 
 void MainWindow::onAddVCVS()
@@ -244,7 +246,6 @@ void MainWindow::onAddCCCS()
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new CCCSItem(ptr));
 }
-
 
 void MainWindow::onAddSinusoidalSource()
 {

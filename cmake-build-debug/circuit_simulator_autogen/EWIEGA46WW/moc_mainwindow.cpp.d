@@ -4,6 +4,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Current\ courses/OOP/circuit_simulator/Component.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/DiodeModel.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/PrintRequest.h \
+  D:/Course/Current\ courses/OOP/circuit_simulator/WireInfo.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/Cholesky \
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/Core \
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/Dense \
@@ -200,8 +201,10 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/concepts/pair_associative_container.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/map.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/string.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/vector.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/schematiceditor.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QList \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QPointF \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \

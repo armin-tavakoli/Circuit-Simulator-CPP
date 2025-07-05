@@ -9,14 +9,13 @@
 #include <Eigen/Dense>
 #include "Component.h"
 #include "PrintRequest.h"
+#include "WireInfo.h"
 
 using namespace std;
 using namespace Eigen;
 
 class Circuit {
 public:
-    void saveToFile(const std::string& filepath);
-    void loadFromFile(const std::string& filepath);
     void addComponent(unique_ptr<Component> component);
     bool removeComponent(const string& name);
     bool hasComponent(const string& name) const;
@@ -28,17 +27,20 @@ public:
     const vector<unique_ptr<Component>>& getComponents() const;
     void runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars);
     Component* findComponent(const string& name);
-
-    // <<< تابع جدید برای دسترسی به نتایج >>>
     const map<string, vector<double>>& getSimulationResults() const;
+
+    void saveToFile(const std::string& filepath);
+    void loadFromFile(const std::string& filepath);
+
+    vector<WireInfo>& getWires() { return wires; }
 
 private:
     vector<unique_ptr<Component>> components;
+    vector<WireInfo> wires;
+
     map<string, int> currentComponentMap;
     int nodeCount = 0;
     int currentVarCount = 0;
-
-    // <<< متغیر جدید برای نگهداری نتایج >>>
     map<string, vector<double>> simulationResults;
 
     void analyzeCircuit();

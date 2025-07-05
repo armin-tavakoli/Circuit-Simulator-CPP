@@ -3,14 +3,21 @@
 #include <QGraphicsScene>
 #include <QMouseEvent>
 #include <QDebug>
+#include <cmath>
 #include "terminalitem.h"
 #include "polylinewireitem.h"
 #include "junctionitem.h"
 #include "componentitem.h"
 #include "Circuit.h"
-#include "grounditem.h" // <<< این خط برای رفع خطا اضافه شد
+#include "grounditem.h"
+#include "resistoritem.h"
+#include "capacitoritem.h"
+#include "inductoritem.h"
+#include "voltagesourceitem.h"
+#include "currentsourceitem.h"
+#include "dependentsourceitems.h"
 
-// <<< سازنده تغییر می‌کند >>>
+
 SchematicEditor::SchematicEditor(Circuit* circuit, QWidget *parent)
         : QGraphicsView(parent), m_circuit(circuit)
 {
@@ -21,62 +28,116 @@ SchematicEditor::SchematicEditor(Circuit* circuit, QWidget *parent)
     m_wiringState = WiringState::NotWiring;
 }
 
-// <<< پیاده‌سازی تابع اصلی >>>
+void SchematicEditor::populateSceneFromCircuit()
+{
+    scene()->clear();
+    m_logicalNodes.clear();
+    if (!m_circuit) return;
+
+    std::map<std::string, ComponentItem*> componentItemMap;
+
+    const auto& components = m_circuit->getComponents();
+    for (const auto& logic_comp_ptr : components) {
+        Component* logic_comp = logic_comp_ptr.get();
+        if (!logic_comp) continue;
+
+        ComponentItem* newItem = nullptr;
+
+        if (auto r = dynamic_cast<Resistor*>(logic_comp)) { newItem = new ResistorItem(r); }
+        else if (auto c = dynamic_cast<Capacitor*>(logic_comp)) { newItem = new CapacitorItem(c); }
+        else if (auto l = dynamic_cast<Inductor*>(logic_comp)) { newItem = new InductorItem(l); }
+        else if (auto vcvs = dynamic_cast<VCVS*>(logic_comp)) { newItem = new VCVSItem(vcvs); }
+        else if (auto vccs = dynamic_cast<VCCS*>(logic_comp)) { newItem = new VCCSItem(vccs); }
+        else if (auto ccvs = dynamic_cast<CCVS*>(logic_comp)) { newItem = new CCVSItem(ccvs); }
+        else if (auto cccs = dynamic_cast<CCCS*>(logic_comp)) { newItem = new CCCSItem(cccs); }
+        else if (auto is = dynamic_cast<CurrentSource*>(logic_comp)) { newItem = new CurrentSourceItem(is); }
+        else if (auto gnd = dynamic_cast<Ground*>(logic_comp)) { newItem = new GroundItem(gnd); }
+        else if (auto vs = dynamic_cast<VoltageSource*>(logic_comp)) { newItem = new VoltageSourceItem(vs); }
+
+        if (newItem) {
+            newItem->setPos(logic_comp->getPosition());
+            scene()->addItem(newItem);
+            componentItemMap[logic_comp->getName()] = newItem;
+        }
+    }
+
+    for (const auto& wireInfo : m_circuit->getWires()) {
+        if (componentItemMap.count(wireInfo.startCompName) && componentItemMap.count(wireInfo.endCompName)) {
+            ComponentItem* startCompItem = componentItemMap.at(wireInfo.startCompName);
+            TerminalItem* startTerm = (wireInfo.startTerminalId == 0) ? startCompItem->terminal1() : startCompItem->terminal2();
+
+            ComponentItem* endCompItem = componentItemMap.at(wireInfo.endCompName);
+            TerminalItem* endTerm = (wireInfo.endTerminalId == 0) ? endCompItem->terminal1() : endCompItem->terminal2();
+
+            if (startTerm && endTerm) {
+                auto newWire = new PolylineWireItem(startTerm);
+                for (size_t i = 1; i < wireInfo.points.size(); ++i) {
+                    const auto& p = wireInfo.points[i];
+                    newWire->addPoint(QPointF(p.x, p.y));
+                }
+                newWire->setEndTerminal(endTerm);
+                scene()->addItem(newWire);
+                registerLogicalConnection(startTerm, endTerm);
+            }
+        }
+    }
+}
+
+void SchematicEditor::updateCircuitWires()
+{
+    if (!m_circuit) return;
+    m_circuit->getWires().clear();
+    for (QGraphicsItem* item : scene()->items()) {
+        if (auto wireItem = dynamic_cast<PolylineWireItem*>(item)) {
+            WireInfo info;
+            TerminalItem* startTerm = wireItem->getStartTerminal();
+            TerminalItem* endTerm = wireItem->getEndTerminal();
+            if (startTerm && endTerm && startTerm->getParentComponent() && endTerm->getParentComponent()) {
+                info.startCompName = startTerm->getParentComponent()->getComponent()->getName();
+                info.startTerminalId = startTerm->getId();
+                info.endCompName = endTerm->getParentComponent()->getComponent()->getName();
+                info.endTerminalId = endTerm->getId();
+                for(const QPointF& p : wireItem->getPoints()) {
+                    info.points.push_back({p.x(), p.y()});
+                }
+                m_circuit->getWires().push_back(info);
+            }
+        }
+    }
+}
+
 void SchematicEditor::updateBackendNodes()
 {
     if (!m_circuit) return;
-
-    // نقشه برای نگهداری شماره گره هر پایانه
     std::map<TerminalItem*, int> terminalNodeMap;
-    int nextNodeId = 1; // شماره گره از ۱ شروع می‌شود (۰ برای زمین است)
-
-    // ۱. به هر گروه از پایانه‌های متصل، یک شماره گره اختصاص بده
+    int nextNodeId = 1;
     for (const auto& nodeSet : m_logicalNodes) {
         bool isGroundNode = false;
-        // چک کن آیا این گره شامل زمین است یا نه
         for (TerminalItem* term : nodeSet) {
-            if (dynamic_cast<GroundItem*>(term->parentItem())) {
+            if (dynamic_cast<GroundItem*>(term->getParentComponent())) {
                 isGroundNode = true;
                 break;
             }
         }
-
         int currentNodeId = isGroundNode ? 0 : nextNodeId++;
-
         for (TerminalItem* term : nodeSet) {
             terminalNodeMap[term] = currentNodeId;
         }
     }
-
-    // ۲. گره‌های قطعات منطقی را در بک‌اند به‌روز کن
     for (QGraphicsItem* item : scene()->items()) {
         if (auto compItem = dynamic_cast<ComponentItem*>(item)) {
-            Component* logicComp = compItem->getComponent();
-            if (!logicComp) continue;
-
-            TerminalItem* t1 = compItem->terminal1();
-            TerminalItem* t2 = compItem->terminal2();
-
-            int n1 = -1, n2 = -1; // گره‌های پیش‌فرض نامعتبر
-
-            if (terminalNodeMap.count(t1)) {
-                n1 = terminalNodeMap[t1];
+            if (auto logicComp = compItem->getComponent()) {
+                TerminalItem* t1 = compItem->terminal1();
+                TerminalItem* t2 = compItem->terminal2();
+                int n1 = terminalNodeMap.count(t1) ? terminalNodeMap.at(t1) : -1;
+                int n2 = terminalNodeMap.count(t2) ? terminalNodeMap.at(t2) : -1;
+                logicComp->setNodes(n1, n2);
             }
-            if (t2->isVisible() && terminalNodeMap.count(t2)) {
-                n2 = terminalNodeMap[t2];
-            } else if (!t2->isVisible()) { // برای قطعاتی مثل زمین که یک پایانه دارند
-                n2 = 0; // پایانه دوم به زمین متصل است
-            }
-
-            logicComp->setNodes(n1, n2);
-            qDebug() << "Updated component" << QString::fromStdString(logicComp->getName()) << "to nodes" << n1 << n2;
         }
     }
     qDebug() << "Backend nodes updated!";
 }
 
-
-// بقیه توابع کلاس بدون تغییر باقی می‌مانند
 void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
 {
     QGraphicsView::drawBackground(painter, rect);
@@ -92,61 +153,60 @@ void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
         painter->drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y));
 }
 
-TerminalItem* SchematicEditor::getTerminalAt(const QPoint& pos)
+void SchematicEditor::mousePressEvent(QMouseEvent *event)
 {
-    for (QGraphicsItem* item : items(pos)) {
-        if (auto terminal = dynamic_cast<TerminalItem*>(item)) {
-            return terminal;
+    // لغو عملیات با کلیک راست
+    if (event->button() == Qt::RightButton && m_wiringState == WiringState::DrawingWire) {
+        cancelWiring();
+        return;
+    }
+
+    if (m_wiringState == WiringState::NotWiring) {
+        if (event->button() == Qt::LeftButton) {
+            if (auto startTerminal = getTerminalAt(event->pos())) {
+                m_currentWire = new PolylineWireItem(startTerminal);
+                scene()->addItem(m_currentWire);
+                m_wiringState = WiringState::DrawingWire;
+            }
+        }
+    } else if (m_wiringState == WiringState::DrawingWire) {
+        if (event->button() == Qt::LeftButton) {
+            QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
+            if (auto endTerminal = getTerminalAt(event->pos())) {
+                // کلیک روی یک پایانه برای اتمام سیم‌کشی
+                if (endTerminal != m_currentWire->getStartTerminal()) {
+                    TerminalItem* startTerm = m_currentWire->getStartTerminal();
+                    QPointF lastP = m_currentWire->lastPoint();
+                    m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
+                    m_currentWire->setEndTerminal(endTerminal);
+
+                    // سیم اکنون دائمی است. حالت را ریست می‌کنیم بدون اینکه سیم را پاک کنیم.
+                    m_currentWire = nullptr;
+                    m_wiringState = WiringState::NotWiring;
+
+                    registerLogicalConnection(startTerm, endTerminal);
+                } else {
+                    // کلیک مجدد روی پایانه شروع، عملیات را لغو می‌کند
+                    cancelWiring();
+                }
+            } else {
+                // کلیک روی فضای خالی برای افزودن یک گوشه (شکست) به سیم
+                QPointF lastP = m_currentWire->lastPoint();
+                m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
+                m_currentWire->addPoint(snappedPos);
+            }
         }
     }
-    return nullptr;
-}
 
-PolylineWireItem* SchematicEditor::getWireAt(const QPoint& pos)
-{
-    for (QGraphicsItem* item : items(pos)) {
-        if (auto wire = dynamic_cast<PolylineWireItem*>(item)) {
-            return wire;
-        }
-    }
-    return nullptr;
-}
-
-QPointF SchematicEditor::snapToGrid(const QPointF& pos)
-{
-    const int gridSize = 20;
-    qreal x = round(pos.x() / gridSize) * gridSize;
-    qreal y = round(pos.y() / gridSize) * gridSize;
-    return QPointF(x, y);
-}
-
-void SchematicEditor::toggleWiringMode(bool enabled)
-{
-    if (enabled) {
-        m_wiringState = WiringState::NotWiring;
-    } else {
-        if (m_currentWire) {
-            scene()->removeItem(m_currentWire);
-            delete m_currentWire;
-            m_currentWire = nullptr;
-        }
-        for(auto segment : m_tempPreviewSegments) {
-            scene()->removeItem(segment);
-            delete segment;
-        }
-        m_tempPreviewSegments.clear();
-        m_wiringState = WiringState::NotWiring;
-    }
+    // پاک کردن خطوط پیش‌نمایش موقت
+    clearPreviewSegments();
+    QGraphicsView::mousePressEvent(event);
 }
 
 void SchematicEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_wiringState == WiringState::DrawingWire) {
-        for(auto segment : m_tempPreviewSegments) {
-            scene()->removeItem(segment);
-            delete segment;
-        }
-        m_tempPreviewSegments.clear();
+        clearPreviewSegments();
 
         QPointF currentPos = snapToGrid(mapToScene(event->pos()));
         QPointF startPos = m_currentWire->lastPoint();
@@ -165,75 +225,37 @@ void SchematicEditor::mouseMoveEvent(QMouseEvent *event)
     QGraphicsView::mouseMoveEvent(event);
 }
 
-void SchematicEditor::mousePressEvent(QMouseEvent *event)
+void SchematicEditor::toggleWiringMode(bool enabled)
 {
-    if (event->button() == Qt::RightButton && m_wiringState == WiringState::DrawingWire) {
-        toggleWiringMode(false);
-        return;
+    // این تابع اکنون فقط برای لغو عملیات از خارج کلاس استفاده می‌شود
+    if (!enabled) {
+        cancelWiring();
     }
+}
 
-    if (m_wiringState == WiringState::NotWiring) {
-        if (event->button() == Qt::LeftButton) {
-            if (auto startTerminal = getTerminalAt(event->pos())) {
-                m_currentWire = new PolylineWireItem(startTerminal);
-                scene()->addItem(m_currentWire);
-                m_wiringState = WiringState::DrawingWire;
-            }
-        }
-    } else if (m_wiringState == WiringState::DrawingWire) {
-        if (event->button() == Qt::LeftButton) {
-            QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
-
-            if (auto endTerminal = getTerminalAt(event->pos())) {
-                if (endTerminal != m_currentWire->getStartTerminal()) {
-                    QPointF lastP = m_currentWire->lastPoint();
-                    m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
-                    m_currentWire->setEndTerminal(endTerminal);
-                    registerLogicalConnection(m_currentWire->getStartTerminal(), endTerminal);
-                }
-                m_currentWire = nullptr;
-                m_wiringState = WiringState::NotWiring;
-            } else if (auto clickedWire = getWireAt(event->pos())) {
-                scene()->addItem(new JunctionItem(snappedPos));
-                auto junctionTerminal = new TerminalItem(nullptr, -1);
-                junctionTerminal->setPos(snappedPos);
-                scene()->addItem(junctionTerminal);
-
-                QPointF lastP = m_currentWire->lastPoint();
-                m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
-                m_currentWire->setEndTerminal(junctionTerminal);
-
-                registerLogicalConnection(m_currentWire->getStartTerminal(), junctionTerminal);
-                registerLogicalConnection(clickedWire->getStartTerminal(), junctionTerminal);
-
-                m_currentWire = nullptr;
-                m_wiringState = WiringState::NotWiring;
-            } else {
-                QPointF lastP = m_currentWire->lastPoint();
-                m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
-                m_currentWire->addPoint(snappedPos);
-            }
-        }
+void SchematicEditor::cancelWiring()
+{
+    if (m_currentWire) {
+        scene()->removeItem(m_currentWire);
+        delete m_currentWire;
+        m_currentWire = nullptr;
     }
+    clearPreviewSegments();
+    m_wiringState = WiringState::NotWiring;
+}
 
+void SchematicEditor::clearPreviewSegments()
+{
     for(auto segment : m_tempPreviewSegments) {
         scene()->removeItem(segment);
         delete segment;
     }
     m_tempPreviewSegments.clear();
-
-    QGraphicsView::mousePressEvent(event);
-}
-
-void SchematicEditor::mouseReleaseEvent(QMouseEvent *event)
-{
-    QGraphicsView::mouseReleaseEvent(event);
 }
 
 void SchematicEditor::registerLogicalConnection(TerminalItem* term1, TerminalItem* term2)
 {
     if (!term1 || !term2) return;
-
     int node1_idx = -1, node2_idx = -1;
     for (size_t i = 0; i < m_logicalNodes.size(); ++i) {
         if (m_logicalNodes[i].count(term1)) node1_idx = i;
@@ -252,4 +274,27 @@ void SchematicEditor::registerLogicalConnection(TerminalItem* term1, TerminalIte
         m_logicalNodes.push_back({term1, term2});
     }
     qDebug() << "Logical connection registered. Total nodes:" << m_logicalNodes.size();
+}
+
+TerminalItem* SchematicEditor::getTerminalAt(const QPoint& pos)
+{
+    for (QGraphicsItem* item : items(pos)) {
+        if (auto terminal = dynamic_cast<TerminalItem*>(item)) {
+            return terminal;
+        }
+    }
+    return nullptr;
+}
+
+QPointF SchematicEditor::snapToGrid(const QPointF& pos)
+{
+    const int gridSize = 20;
+    qreal x = round(pos.x() / gridSize) * gridSize;
+    qreal y = round(pos.y() / gridSize) * gridSize;
+    return QPointF(x, y);
+}
+
+void SchematicEditor::mouseReleaseEvent(QMouseEvent *event)
+{
+    QGraphicsView::mouseReleaseEvent(event);
 }

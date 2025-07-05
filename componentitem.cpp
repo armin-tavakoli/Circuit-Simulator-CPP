@@ -1,6 +1,6 @@
 #include "componentitem.h"
 #include "terminalitem.h"
-#include "propertiesdialog.h" // The new dialog class
+#include "propertiesdialog.h"
 #include <cmath>
 #include <QDebug>
 #include <QTimer>
@@ -44,6 +44,12 @@ QVariant ComponentItem::itemChange(GraphicsItemChange change, const QVariant &va
         qreal y = round(newPos.y() / gridSize) * gridSize;
         QPointF snappedPos(x, y);
 
+        // --- خط جدید: موقعیت را در قطعه منطقی ذخیره کن ---
+        if (logicalComponent) {
+            logicalComponent->setPosition(snappedPos.x(), snappedPos.y());
+        }
+        // --------------------------------------------------
+
         QTimer::singleShot(0, this, [this]() {
             if (m_terminal1) m_terminal1->updateConnectedWires();
             if (m_terminal2 && m_terminal2->isVisible()) m_terminal2->updateConnectedWires();
@@ -69,7 +75,7 @@ void ComponentItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
         try {
             auto newProps = dialog.getProperties();
             logicalComponent->setProperties(newProps);
-            update(); // Redraw to show new value
+            update();
         } catch (const std::exception& e) {
             QMessageBox::warning(event->widget(), "Invalid Value", e.what());
         }

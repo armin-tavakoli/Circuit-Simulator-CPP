@@ -6,7 +6,7 @@
 class GroundItem : public ComponentItem
 {
 public:
-    explicit GroundItem(QGraphicsItem *parent = nullptr);
+    explicit GroundItem(Component* component, QGraphicsItem *parent = nullptr);
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 };

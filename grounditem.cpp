@@ -2,8 +2,8 @@
 #include "terminalitem.h"
 #include <QPainter>
 
-GroundItem::GroundItem(QGraphicsItem *parent)
-        : ComponentItem(nullptr, parent)
+GroundItem::GroundItem(Component* component, QGraphicsItem *parent)
+        : ComponentItem(component, parent)
 {
     m_terminal1->setPos(0, 0);
     m_terminal2->setVisible(false);

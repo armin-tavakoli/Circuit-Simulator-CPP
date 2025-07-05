@@ -46,6 +46,7 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/Simulator.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/Simulator.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/ValueParser.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/WireInfo.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/capacitoritem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/capacitoritem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/cereal_registration.h \
@@ -261,6 +262,7 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/concepts/pair_associative_container.hpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/map.hpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/string.hpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/vector.hpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/main.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.h \
@@ -279,6 +281,7 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/voltagesourceitem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/voltagesourceitem.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QList \
+	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QPointF \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \

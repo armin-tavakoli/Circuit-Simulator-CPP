@@ -198,6 +198,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/concepts/pair_associative_container.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/map.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/string.hpp \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QPointF \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \

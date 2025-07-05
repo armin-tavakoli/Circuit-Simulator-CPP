@@ -16,7 +16,9 @@ void Circuit::saveToFile(const std::string& filepath) {
         throw std::runtime_error("Cannot open file for writing: " + filepath);
     }
     cereal::BinaryOutputArchive archive(os);
-    archive(components);
+
+    archive(components, wires);
+
     std::cout << "Circuit saved successfully to " << filepath << std::endl;
 }
 
@@ -26,8 +28,11 @@ void Circuit::loadFromFile(const std::string& filepath) {
         throw std::runtime_error("Cannot open file for reading: " + filepath);
     }
     cereal::BinaryInputArchive archive(is);
+
     clear();
-    archive(components);
+
+    archive(components, wires);
+
     std::cout << "Circuit loaded successfully from " << filepath << std::endl;
 }
 
