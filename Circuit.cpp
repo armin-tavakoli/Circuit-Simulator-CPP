@@ -4,8 +4,33 @@
 #include <set>
 #include <map>
 #include <queue>
+#include <fstream>
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/memory.hpp>
+#include "cereal_registration.h"
 
-// تابع جدید برای دسترسی به نتایج
+void Circuit::saveToFile(const std::string& filepath) {
+    std::ofstream os(filepath, std::ios::binary);
+    if (!os) {
+        throw std::runtime_error("Cannot open file for writing: " + filepath);
+    }
+    cereal::BinaryOutputArchive archive(os);
+    archive(components);
+    std::cout << "Circuit saved successfully to " << filepath << std::endl;
+}
+
+void Circuit::loadFromFile(const std::string& filepath) {
+    std::ifstream is(filepath, std::ios::binary);
+    if (!is) {
+        throw std::runtime_error("Cannot open file for reading: " + filepath);
+    }
+    cereal::BinaryInputArchive archive(is);
+    clear();
+    archive(components);
+    std::cout << "Circuit loaded successfully from " << filepath << std::endl;
+}
+
 const map<string, vector<double>>& Circuit::getSimulationResults() const {
     return simulationResults;
 }
@@ -18,9 +43,7 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
         return;
     }
 
-    // پاک کردن نتایج قبلی در ابتدای هر تحلیل
     simulationResults.clear();
-
     double actual_tstep = Tstep;
     if (Tmaxstep > 0 && Tmaxstep < Tstep) {
         actual_tstep = Tmaxstep;
@@ -77,7 +100,6 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
 
         x = x_nr_guess;
 
-        // ذخیره نتایج به جای چاپ در کنسول
         if (t >= Tstart) {
             simulationResults["Time"].push_back(t);
             for (int i = 0; i < nodeCount; ++i) {
@@ -114,7 +136,6 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
         throw runtime_error("Sweep source '" + sweepSourceName + "' not found.");
     }
 
-    // Determine the property to sweep (Voltage or Current)
     string propToSweep;
     if (dynamic_cast<VoltageSource*>(sweepSource)) {
         propToSweep = "Voltage";
@@ -159,7 +180,6 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
     cout << endl;
 
     for (double sweepVal = startVal; sweepVal <= endVal; sweepVal += increment) {
-        // <<< استفاده از سیستم جدید setProperties >>>
         sweepSource->setProperties({{propToSweep, sweepVal}});
 
         VectorXd x = VectorXd::Zero(matrix_size);
@@ -195,9 +215,6 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
     }
     cout << "DC Sweep analysis finished." << endl;
 }
-
-
-// --- بقیه توابع فایل Circuit.cpp بدون تغییر ---
 
 void Circuit::checkConnectivity() const {
     if (components.empty()) {

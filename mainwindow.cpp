@@ -7,7 +7,8 @@
 #include "grounditem.h"
 #include "dependentsourceitems.h"
 #include "scopewindow.h"
-#include "propertiesdialog.h" // For adding new sources
+#include "propertiesdialog.h"
+
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
@@ -15,7 +16,8 @@
 #include <QGraphicsScene>
 #include <QToolBar>
 #include <QPushButton>
-#include <utility> // Required for std::move
+#include <utility>
+#include <QFileDialog> // برای باز کردن دیالوگ فایل
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent)
@@ -47,8 +49,9 @@ void MainWindow::setupMenus()
 {
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(tr("&New"), this, &MainWindow::onFileNew);
+    // اتصال اکشن‌های منو به اسلات‌های صحیح
     fileMenu->addAction(tr("&Open..."), this, &MainWindow::onFileOpen);
-    fileMenu->addAction(tr("&Save"), this, &MainWindow::onFileSave);
+    fileMenu->addAction(tr("&Save..."), this, &MainWindow::onFileSave); // تغییر نام به Save...
     fileMenu->addSeparator();
     fileMenu->addAction(tr("E&xit"), this, &QWidget::close);
 
@@ -86,6 +89,39 @@ void MainWindow::setupMenus()
     menuBar()->addMenu(tr("&Help"));
 }
 
+// ======================================================================
+// پیاده‌سازی صحیح اسلات‌های ذخیره و بازیابی
+// ======================================================================
+
+void MainWindow::onFileSave()
+{
+    QString filePath = QFileDialog::getSaveFileName(this, "Save Circuit", "", "Circuit Files (*.cir)");
+    if (!filePath.isEmpty()) {
+        try {
+            circuit.saveToFile(filePath.toStdString());
+            QMessageBox::information(this, "Success", "Circuit saved successfully!");
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Save Error", e.what());
+        }
+    }
+}
+
+void MainWindow::onFileOpen()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Open Circuit", "", "Circuit Files (*.cir)");
+    if (!filePath.isEmpty()) {
+        try {
+            circuit.loadFromFile(filePath.toStdString());
+            // TODO: بازسازی صحنه گرافیکی بر اساس مدار بارگذاری شده
+            // editor->recreateSceneFromCircuit(); // این تابع باید پیاده‌سازی شود
+            QMessageBox::information(this, "Success", "Circuit loaded successfully!\n(Graphical view not updated yet)");
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Load Error", e.what());
+        }
+    }
+}
+
+
 void MainWindow::onRunSimulation()
 {
     editor->updateBackendNodes();
@@ -112,10 +148,16 @@ std::string MainWindow::getNextComponentName(const std::string& prefix)
     return prefix + std::to_string(count);
 }
 
-void MainWindow::onFileNew() { QMessageBox::information(this, "Action", "New File action triggered!"); }
-void MainWindow::onFileOpen() { QMessageBox::information(this, "Action", "Open File action triggered!"); }
-void MainWindow::onFileSave() { QMessageBox::information(this, "Action", "Save File action triggered!"); }
+// تابع onFileNew بدون تغییر باقی می‌ماند
+void MainWindow::onFileNew() {
+    // TODO: پاک کردن مدار فعلی و صحنه گرافیکی
+    circuit.clear();
+    editor->scene()->clear();
+    QMessageBox::information(this, "Action", "New circuit created.");
+}
 
+
+// بقیه توابع onAdd... بدون تغییر باقی می‌مانند
 void MainWindow::onAddResistor()
 {
     string name = getNextComponentName("R");

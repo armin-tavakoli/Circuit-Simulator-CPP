@@ -1,28 +1,29 @@
 cmake_minimum_required(VERSION 3.20)
 project(circuit_simulator)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-# <<< ماژول Charts به این خط اضافه شد >>>
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
 
 include_directories(${CMAKE_SOURCE_DIR}/eigen-3.4.0)
+include_directories(${CMAKE_SOURCE_DIR}/libs)
+
 
 add_executable(circuit_simulator
-        # فایل‌های اصلی
         main.cpp
         mainwindow.h
         mainwindow.cpp
-
-        # فایل‌های ویرایشگر
         schematiceditor.h
         schematiceditor.cpp
-
-        # فایل‌های آیتم‌های گرافیکی
         componentitem.h
         componentitem.cpp
         terminalitem.h
@@ -44,12 +45,8 @@ add_executable(circuit_simulator
         polylinewireitem.h
         polylinewireitem.cpp
         junctionitem.h
-
-        # <<< فایل‌های جدید برای پنجره Scope >>>
         scopewindow.h
         scopewindow.cpp
-
-        # فایل‌های بک‌اند
         Circuit.h
         Circuit.cpp
         Component.h
@@ -61,7 +58,7 @@ add_executable(circuit_simulator
         ValueParser.h
         propertiesdialog.cpp
         propertiesdialog.h
+        cereal_registration.h
 )
 
-# <<< کتابخانه Charts به این خط اضافه شد >>>
 target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets Qt6::Charts)

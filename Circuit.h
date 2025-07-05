@@ -15,6 +15,8 @@ using namespace Eigen;
 
 class Circuit {
 public:
+    void saveToFile(const std::string& filepath);
+    void loadFromFile(const std::string& filepath);
     void addComponent(unique_ptr<Component> component);
     bool removeComponent(const string& name);
     bool hasComponent(const string& name) const;

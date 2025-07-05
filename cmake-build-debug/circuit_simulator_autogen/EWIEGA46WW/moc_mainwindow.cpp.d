@@ -187,6 +187,19 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/src/plugins/MatrixCwiseBinaryOps.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/src/plugins/MatrixCwiseUnaryOps.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/eigen-3.4.0/Eigen/src/plugins/ReshapedMethods.h \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/access.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/cereal.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/details/helpers.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/details/polymorphic_impl_fwd.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/details/static_object.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/details/traits.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/macros.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/specialize.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/base_class.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/common.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/concepts/pair_associative_container.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/map.hpp \
+  D:/Course/Current\ courses/OOP/circuit_simulator/libs/cereal/types/string.hpp \
   D:/Course/Current\ courses/OOP/circuit_simulator/schematiceditor.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QList \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
@@ -549,6 +562,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/tr1/special_function_util.h \
   D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/tuple \
   D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/type_traits \
+  D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/typeindex \
   D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/typeinfo \
   D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_map \
   D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_set \

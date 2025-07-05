@@ -427,6 +427,12 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/cereal_registration.h",
+			"MU",
+			"EWIEGA46WW/moc_cereal_registration.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/componentitem.h",
 			"MU",
 			"EWIEGA46WW/moc_componentitem.cpp",
@@ -540,6 +546,7 @@
 	"MOC_INCLUDES" : 
 	[
 		"D:/Course/Current courses/OOP/circuit_simulator/eigen-3.4.0",
+		"D:/Course/Current courses/OOP/circuit_simulator/libs",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore",
