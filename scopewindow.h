@@ -17,13 +17,14 @@ class ScopeWindow : public QDialog
 Q_OBJECT
 
 public:
-    explicit ScopeWindow(const std::map<std::string, std::vector<double>>& results, QWidget *parent = nullptr);
+    // Constructor updated to accept an X-axis title
+    explicit ScopeWindow(const std::map<std::string, std::vector<double>>& results, const QString& xAxisTitle, QWidget *parent = nullptr);
     ~ScopeWindow();
 
 private:
-    void setupChart(const std::map<std::string, std::vector<double>>& results);
+    void setupChart(const std::map<std::string, std::vector<double>>& results, const QString& xAxisTitle);
 
     QChartView *m_chartView;
 };
 
-#endif // SCOPEWINDOW_H
+#endif

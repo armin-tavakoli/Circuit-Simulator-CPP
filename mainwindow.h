@@ -33,9 +33,9 @@ private slots:
     void onAddCCCS();
     void onRunSimulation();
 
-    // <<< اسلات‌های جدید برای منابع سینوسی و پالس اضافه شدند >>>
     void onAddSinusoidalSource();
     void onAddPulseSource();
+    void onAddACVoltageSource();
 
 private:
     void setupMenus();

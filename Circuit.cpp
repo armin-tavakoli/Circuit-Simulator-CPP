@@ -5,10 +5,15 @@
 #include <map>
 #include <queue>
 #include <fstream>
+#include <cmath>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
 #include "cereal_registration.h"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 void Circuit::saveToFile(const std::string& filepath) {
     std::ofstream os(filepath, std::ios::binary);
@@ -131,6 +136,100 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
         }
     }
     cout << "Transient analysis finished." << endl;
+}
+
+void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, const string& sweepType, const vector<PrintVariable>& printVars) {
+    analyzeCircuit();
+    int matrix_size = nodeCount + currentVarCount;
+    if (matrix_size == 0) {
+        cout << "Circuit is empty. Cannot run analysis." << endl;
+        return;
+    }
+
+    bool hasACSource = false;
+    for (const auto& comp : components) {
+        if (dynamic_cast<ACVoltageSource*>(comp.get())) {
+            hasACSource = true;
+            break;
+        }
+    }
+    if (!hasACSource) {
+        throw runtime_error("AC analysis requires at least one AC Voltage Source in the circuit.");
+    }
+
+    simulationResults.clear();
+    simulationResults["Frequency"];
+
+    if (printVars.empty()) {
+        for (int i = 0; i < nodeCount; ++i) {
+            simulationResults["V(" + to_string(i + 1) + ")"];
+        }
+        for (const auto& pair : currentComponentMap) {
+            simulationResults["I(" + pair.first + ")"];
+        }
+    } else {
+        for (const auto& var : printVars) {
+            if (toupper(var.type) == 'V') {
+                simulationResults["V(" + var.id + ")"];
+            } else if (toupper(var.type) == 'I') {
+                simulationResults["I(" + var.id + ")"];
+            }
+        }
+    }
+
+    cout << "--- Starting AC Sweep Analysis ---" << endl;
+
+    for (int i = 0; i < numPoints; ++i) {
+        double freq = 0;
+        if (numPoints == 1) {
+            freq = startFreq;
+        } else if (sweepType == "Linear") {
+            freq = startFreq + i * (stopFreq - startFreq) / (numPoints - 1);
+        } else if (sweepType == "Decade") {
+            freq = startFreq * pow(10.0, i * (log10(stopFreq / startFreq)) / (numPoints - 1));
+        } else if (sweepType == "Octave") {
+            freq = startFreq * pow(2.0, i * (log2(stopFreq / startFreq)) / (numPoints - 1));
+        }
+
+        if (freq == 0 && startFreq != 0) continue;
+        double omega = 2 * M_PI * freq;
+
+        MatrixXcd A = MatrixXcd::Zero(matrix_size, matrix_size);
+        VectorXcd b = VectorXcd::Zero(matrix_size);
+
+        for (const auto& comp : components) {
+            int final_current_idx = -1;
+            if (comp->addsCurrentVariable()) {
+                final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
+            }
+            comp->stampAC(A, b, final_current_idx, omega);
+        }
+
+        VectorXcd x = A.colPivHouseholderQr().solve(b);
+
+        simulationResults["Frequency"].push_back(freq);
+        for (auto const& [key, val] : simulationResults) {
+            if (key == "Frequency") continue;
+
+            char type = toupper(key[0]);
+            string id = key.substr(key.find("(") + 1, key.find(")") - key.find("(") - 1);
+
+            if (type == 'V') {
+                int nodeNum = stoi(id);
+                if (nodeNum > 0 && nodeNum <= nodeCount) {
+                    double magnitude = std::abs(x(nodeNum - 1));
+                    simulationResults[key].push_back(magnitude);
+                }
+            } else if (type == 'I') {
+                if (currentComponentMap.count(id)) {
+                    int m_idx = currentComponentMap.at(id);
+                    double magnitude = std::abs(x(nodeCount + m_idx - 1));
+                    simulationResults[key].push_back(magnitude);
+                }
+            }
+        }
+    }
+    cout << "AC Sweep analysis finished." << endl;
 }
 
 void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars) {

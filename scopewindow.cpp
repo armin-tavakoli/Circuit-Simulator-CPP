@@ -2,19 +2,20 @@
 #include <QtCharts/QChart>
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
+#include <QtCharts/QValueAxis>
+#include <QtCharts/QLogValueAxis> // Included for logarithmic axis
 #include <QVBoxLayout>
 
 QT_USE_NAMESPACE
 
-ScopeWindow::ScopeWindow(const std::map<std::string, std::vector<double>>& results, QWidget *parent)
+ScopeWindow::ScopeWindow(const std::map<std::string, std::vector<double>>& results, const QString& xAxisTitle, QWidget *parent)
         : QDialog(parent), m_chartView(nullptr)
 {
     setWindowTitle(tr("Simulation Scope"));
     setMinimumSize(800, 600);
 
-    setupChart(results);
+    setupChart(results, xAxisTitle);
 
-    // Set up the layout for the dialog
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->addWidget(m_chartView);
     setLayout(layout);
@@ -22,42 +23,71 @@ ScopeWindow::ScopeWindow(const std::map<std::string, std::vector<double>>& resul
 
 ScopeWindow::~ScopeWindow()
 {
-    // The chart view and its contents will be deleted automatically
 }
 
-void ScopeWindow::setupChart(const std::map<std::string, std::vector<double>>& results)
+void ScopeWindow::setupChart(const std::map<std::string, std::vector<double>>& results, const QString& xAxisTitle)
 {
     QChart *chart = new QChart();
-    chart->setTitle("Transient Analysis Results");
+    chart->setTitle("Simulation Results");
     chart->setAnimationOptions(QChart::SeriesAnimations);
 
-    // Find the "Time" vector, which will be our X-axis
-    auto it = results.find("Time");
-    if (it == results.end() || it->second.empty()) {
-        // Handle case where there is no time data
-        return;
+    // Determine the X-axis data (either Time or Frequency)
+    const std::vector<double>* xData = nullptr;
+    if (results.count("Time")) {
+        xData = &results.at("Time");
+    } else if (results.count("Frequency")) {
+        xData = &results.at("Frequency");
     }
-    const std::vector<double>& timeData = it->second;
 
-    // Create a series for each variable (except "Time")
+    if (!xData || xData->empty()) {
+        return; // No data to plot
+    }
+
+    // Create a series for each variable
     for (const auto& pair : results) {
-        if (pair.first == "Time") {
-            continue; // Skip the time vector itself
+        if (pair.first == "Time" || pair.first == "Frequency") {
+            continue;
         }
 
         QLineSeries *series = new QLineSeries();
         series->setName(QString::fromStdString(pair.first));
 
         const std::vector<double>& yData = pair.second;
-        size_t dataSize = std::min(timeData.size(), yData.size());
+        size_t dataSize = std::min(xData->size(), yData.size());
 
         for (size_t i = 0; i < dataSize; ++i) {
-            series->append(timeData[i], yData[i]);
+            series->append((*xData)[i], yData[i]);
         }
         chart->addSeries(series);
     }
 
-    chart->createDefaultAxes();
+    // Customize axes based on analysis type
+    if (xAxisTitle.toLower().contains("freq")) {
+        // Use logarithmic axis for frequency sweep
+        QLogValueAxis *axisX = new QLogValueAxis();
+        axisX->setTitleText(xAxisTitle);
+        axisX->setLabelFormat("%g");
+        axisX->setBase(10.0);
+        chart->addAxis(axisX, Qt::AlignBottom);
+
+        QValueAxis *axisY = new QValueAxis();
+        axisY->setTitleText("Magnitude");
+        chart->addAxis(axisY, Qt::AlignLeft);
+
+        // Attach series to the new axes
+        for(auto series : chart->series()) {
+            series->attachAxis(axisX);
+            series->attachAxis(axisY);
+        }
+    } else {
+        // Use default linear axes for other types (like Transient)
+        chart->createDefaultAxes();
+        QList<QAbstractAxis*> axes = chart->axes(Qt::Horizontal);
+        if (!axes.isEmpty()) {
+            axes.first()->setTitleText(xAxisTitle);
+        }
+    }
+
     chart->legend()->setVisible(true);
     chart->legend()->setAlignment(Qt::AlignBottom);
 

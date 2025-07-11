@@ -18,11 +18,13 @@ ComponentItem::ComponentItem(Component *component, QGraphicsItem *parent)
     m_terminal2 = new TerminalItem(this, 1);
 }
 
+// این تابع باید در کلاس‌های مشتق شده پیاده‌سازی شود، اما بدنه خالی در اینجا لازم است
 QRectF ComponentItem::boundingRect() const
 {
     return QRectF();
 }
 
+// این تابع باید در کلاس‌های مشتق شده پیاده‌سازی شود، اما بدنه خالی در اینجا لازم است
 void ComponentItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(painter);
@@ -44,11 +46,9 @@ QVariant ComponentItem::itemChange(GraphicsItemChange change, const QVariant &va
         qreal y = round(newPos.y() / gridSize) * gridSize;
         QPointF snappedPos(x, y);
 
-        // --- خط جدید: موقعیت را در قطعه منطقی ذخیره کن ---
         if (logicalComponent) {
             logicalComponent->setPosition(snappedPos.x(), snappedPos.y());
         }
-        // --------------------------------------------------
 
         QTimer::singleShot(0, this, [this]() {
             if (m_terminal1) m_terminal1->updateConnectedWires();

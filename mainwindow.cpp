@@ -8,8 +8,8 @@
 #include "dependentsourceitems.h"
 #include "scopewindow.h"
 #include "propertiesdialog.h"
-#include "transientdialog.h" // فراخوانی هدر دیالوگ جدید
-
+#include "simulationdialog.h"
+#include "plotselectiondialog.h"
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
@@ -62,6 +62,7 @@ void MainWindow::setupMenus()
     editMenu->addAction(tr("Add &Inductor"), this, &MainWindow::onAddInductor);
     editMenu->addSeparator();
     editMenu->addAction(tr("Add DC &Voltage Source"), this, &MainWindow::onAddVoltageSource);
+    editMenu->addAction(tr("Add AC Voltage Source"), this, &MainWindow::onAddACVoltageSource);
     editMenu->addAction(tr("Add &Sinusoidal Source"), this, &MainWindow::onAddSinusoidalSource);
     editMenu->addAction(tr("Add &Pulse Source"), this, &MainWindow::onAddPulseSource);
     editMenu->addAction(tr("Add DC &Current Source"), this, &MainWindow::onAddCurrentSource);
@@ -78,10 +79,10 @@ void MainWindow::setupMenus()
     connect(wireAction, &QAction::toggled, editor, &SchematicEditor::toggleWiringMode);
 
     QMenu *simulateMenu = menuBar()->addMenu(tr("&Simulate"));
-    simulateMenu->addAction(tr("&Run Transient Analysis"), this, &MainWindow::onRunSimulation);
+    simulateMenu->addAction(tr("&Run Simulation..."), this, &MainWindow::onRunSimulation);
 
     QToolBar *toolBar = addToolBar(tr("Main Toolbar"));
-    QPushButton *runButton = new QPushButton(tr("Run Simulation"), this);
+    QPushButton *runButton = new QPushButton(tr("Run Simulation..."), this);
     connect(runButton, &QPushButton::clicked, this, &MainWindow::onRunSimulation);
     toolBar->addWidget(runButton);
 
@@ -135,22 +136,64 @@ void MainWindow::onFileOpen()
 
 void MainWindow::onRunSimulation()
 {
-    TransientAnalysisDialog dialog(this);
-    if (dialog.exec() == QDialog::Accepted) {
-        double stopTime = dialog.getStopTime();
-        double startTime = dialog.getStartTime();
-        double timeStep = dialog.getTimeStep();
-
+    SimulationDialog simDialog(this);
+    if (simDialog.exec() == QDialog::Accepted) {
         editor->updateBackendNodes();
         try {
-            circuit.runTransientAnalysis(stopTime, timeStep, {}, startTime);
-
             if (m_scopeWindow) {
                 m_scopeWindow->close();
                 delete m_scopeWindow;
+                m_scopeWindow = nullptr;
             }
-            m_scopeWindow = new ScopeWindow(circuit.getSimulationResults(), this);
-            m_scopeWindow->show();
+
+            int tabIndex = simDialog.getCurrentTabIndex();
+            QString xAxisTitle;
+
+            // Step 1: Run the correct simulation
+            if (tabIndex == 0) { // Transient
+                circuit.runTransientAnalysis(simDialog.getStopTime(), simDialog.getTimeStep(), {}, simDialog.getStartTime());
+                xAxisTitle = "Time (s)";
+            } else if (tabIndex == 1) { // AC Sweep
+                circuit.runACAnalysis(simDialog.getStartFreq(), simDialog.getStopFreq(), simDialog.getNumPoints(), simDialog.getSweepType());
+                xAxisTitle = "Frequency (Hz)";
+            }
+
+            // Step 2: Get all results and prepare for selection
+            const auto& allResults = circuit.getSimulationResults();
+            if (allResults.empty() || allResults.begin()->second.empty()) {
+                QMessageBox::information(this, "Simulation Info", "Simulation ran, but no data was produced.");
+                return;
+            }
+
+            QStringList availablePlots;
+            for(const auto& pair : allResults) {
+                if (pair.first != "Time" && pair.first != "Frequency") {
+                    availablePlots.append(QString::fromStdString(pair.first));
+                }
+            }
+
+            // Step 3: Show the plot selection dialog
+            PlotSelectionDialog plotDialog(availablePlots, this);
+            if (plotDialog.exec() == QDialog::Accepted) {
+                QStringList selectedPlotNames = plotDialog.getSelectedPlots();
+                if (selectedPlotNames.isEmpty()) {
+                    return; // Do nothing if user selected no plots
+                }
+
+                // Step 4: Filter the results based on user selection
+                std::map<std::string, std::vector<double>> selectedResults;
+                // Always include the X-axis data
+                if (allResults.count("Time")) selectedResults["Time"] = allResults.at("Time");
+                if (allResults.count("Frequency")) selectedResults["Frequency"] = allResults.at("Frequency");
+
+                for (const QString& name : selectedPlotNames) {
+                    selectedResults[name.toStdString()] = allResults.at(name.toStdString());
+                }
+
+                // Step 5: Show the scope with only selected plots
+                m_scopeWindow = new ScopeWindow(selectedResults, xAxisTitle, this);
+                m_scopeWindow->show();
+            }
 
         } catch (const std::exception& e) {
             QMessageBox::critical(this, "Simulation Error", e.what());
@@ -196,6 +239,15 @@ void MainWindow::onAddVoltageSource()
 {
     string name = getNextComponentName("V");
     auto logic_comp = make_unique<VoltageSource>(name, -1, -1, 5.0);
+    Component* ptr = logic_comp.get();
+    circuit.addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new VoltageSourceItem(ptr));
+}
+
+void MainWindow::onAddACVoltageSource()
+{
+    string name = getNextComponentName("V");
+    auto logic_comp = make_unique<ACVoltageSource>(name, -1, -1, 1.0, 0.0);
     Component* ptr = logic_comp.get();
     circuit.addComponent(std::move(logic_comp));
     editor->scene()->addItem(new VoltageSourceItem(ptr));

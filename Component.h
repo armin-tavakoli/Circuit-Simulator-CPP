@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <complex> // اضافه شده برای اعداد مختلط
 #include <Eigen/Dense>
 #include "DiodeModel.h"
 #include <QPointF>
@@ -24,7 +25,11 @@ public:
 
     virtual string toNetlistString() const = 0;
     virtual void print() const = 0;
+    // متد stamp برای تحلیل DC و Transient
     virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) = 0;
+    // متد stampAC جدید برای تحلیل AC
+    virtual void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const = 0;
+
     virtual bool addsCurrentVariable() const { return false; }
     virtual bool isNonLinear() const { return false; }
     virtual void resetState() {}
@@ -63,6 +68,7 @@ public:
     Resistor(const string& name, int n1, int n2, double res);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
     map<string, double> getProperties() const override;
@@ -81,6 +87,7 @@ public:
     Capacitor(const string& name, int n1, int n2, double cap);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
     map<string, double> getProperties() const override;
@@ -99,10 +106,11 @@ private:
 
 class Inductor : public Component {
 public:
-    Inductor() : inductance(0.0), prev_current(0.0) {} // سازنده پیش‌فرض
+    Inductor() : inductance(0.0), prev_current(0.0) {}
     Inductor(const string& name, int n1, int n2, double ind);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     bool addsCurrentVariable() const override { return true; }
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
@@ -125,6 +133,7 @@ public:
     CurrentSource(const string& name, int n1, int n2, double current);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
     map<string, double> getProperties() const override;
@@ -139,10 +148,11 @@ private:
 
 class VoltageSource : public Component {
 public:
-    VoltageSource() : voltage(0.0) {} // سازنده پیش‌فرض
+    VoltageSource() : voltage(0.0) {}
     VoltageSource(const string& name, int n1, int n2, double vol);
     void print() const override;
     virtual void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     bool addsCurrentVariable() const override { return true; }
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
@@ -156,12 +166,36 @@ protected:
     double voltage;
 };
 
+class ACVoltageSource : public VoltageSource {
+public:
+    ACVoltageSource() : ac_magnitude(1.0), ac_phase(0.0) {}
+    ACVoltageSource(const string& name, int n1, int n2, double magnitude, double phase = 0.0)
+            : VoltageSource(name, n1, n2, 0.0), ac_magnitude(magnitude), ac_phase(phase) {}
+
+    void print() const override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
+    string toNetlistString() const override;
+    void setProperties(const map<string, double>& properties) override;
+    map<string, double> getProperties() const override;
+    string getDisplayValue() const override;
+
+    template<class Archive>
+    void serialize(Archive & ar) {
+        ar(cereal::base_class<VoltageSource>(this), CEREAL_NVP(ac_magnitude), CEREAL_NVP(ac_phase));
+    }
+private:
+    double ac_magnitude;
+    double ac_phase;
+};
+
 class SinusoidalVoltageSource : public VoltageSource {
 public:
-    SinusoidalVoltageSource() : v_offset(0.0), v_amplitude(0.0), freq(0.0) {} // سازنده پیش‌فرض
+    SinusoidalVoltageSource() : v_offset(0.0), v_amplitude(0.0), freq(0.0) {}
     SinusoidalVoltageSource(const string& name, int n1, int n2, double offset, double amplitude, double frequency);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
     map<string, double> getProperties() const override;
@@ -178,10 +212,11 @@ private:
 
 class PulseVoltageSource : public VoltageSource {
 public:
-    PulseVoltageSource() : v_initial(0.0), v_pulsed(0.0), t_delay(0.0), t_rise(0.0), t_fall(0.0), t_pulse_width(0.0), t_period(0.0) {} // سازنده پیش‌فرض
+    PulseVoltageSource() : v_initial(0.0), v_pulsed(0.0), t_delay(0.0), t_rise(0.0), t_fall(0.0), t_pulse_width(0.0), t_period(0.0) {}
     PulseVoltageSource(const string& name, int n1, int n2, double v1, double v2, double td, double tr, double tf, double pw, double per);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
     map<string, double> getProperties() const override;
@@ -197,10 +232,11 @@ private:
 
 class Diode : public Component {
 public:
-    Diode() : Is(0.0), Vt(0.0), n(0.0), Vz(0.0) {} // سازنده پیش‌فرض
+    Diode() : Is(0.0), Vt(0.0), n(0.0), Vz(0.0) {}
     Diode(const string& name, int n1, int n2, const DiodeModel& modelParams);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     bool isNonLinear() const override { return true; }
     string toNetlistString() const override;
     template<class Archive>
@@ -214,10 +250,11 @@ private:
 
 class VCVS : public Component {
 public:
-    VCVS() : ctrlNode1(-1), ctrlNode2(-1), gain(0.0) {} // سازنده پیش‌فرض
+    VCVS() : ctrlNode1(-1), ctrlNode2(-1), gain(0.0) {}
     VCVS(const string& name, int n1, int n2, int ctrl_n1, int ctrl_n2, double gain);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     bool addsCurrentVariable() const override { return true; }
     int getCtrlNode1() const { return ctrlNode1; }
     int getCtrlNode2() const { return ctrlNode2; }
@@ -237,10 +274,11 @@ private:
 
 class VCCS : public Component {
 public:
-    VCCS() : ctrlNode1(-1), ctrlNode2(-1), gain(0.0) {} // سازنده پیش‌فرض
+    VCCS() : ctrlNode1(-1), ctrlNode2(-1), gain(0.0) {}
     VCCS(const string& name, int n1, int n2, int ctrl_n1, int ctrl_n2, double gain);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     int getCtrlNode1() const { return ctrlNode1; }
     int getCtrlNode2() const { return ctrlNode2; }
     void updateCtrlNodes(int oldNode, int newNode);
@@ -259,10 +297,11 @@ private:
 
 class CCVS : public Component {
 public:
-    CCVS() : gain(0.0) {} // سازنده پیش‌فرض
+    CCVS() : gain(0.0) {}
     CCVS(const string& name, int n1, int n2, const string& vctrl_name, double gain);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     bool addsCurrentVariable() const override { return true; }
     string getCtrlVName() const override { return ctrlVName; }
     string toNetlistString() const override;
@@ -280,10 +319,11 @@ private:
 
 class CCCS : public Component {
 public:
-    CCCS() : gain(0.0) {} // سازنده پیش‌فرض
+    CCCS() : gain(0.0) {}
     CCCS(const string& name, int n1, int n2, const string& vctrl_name, double gain);
     void print() const override;
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override;
     string getCtrlVName() const override { return ctrlVName; }
     string toNetlistString() const override;
     void setProperties(const map<string, double>& properties) override;
@@ -305,6 +345,7 @@ public:
 
     void print() const override {}
     void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override { /* do nothing */ }
+    void stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const override { /* do nothing */ }
     string toNetlistString() const override { return ""; }
 
     template<class Archive>
