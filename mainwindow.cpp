@@ -1,4 +1,6 @@
 #include "mainwindow.h"
+#include "schematiceditor.h"
+#include "Circuit.h"
 #include "resistoritem.h"
 #include "capacitoritem.h"
 #include "inductoritem.h"
@@ -10,15 +12,21 @@
 #include "propertiesdialog.h"
 #include "simulationdialog.h"
 #include "plotselectiondialog.h"
+#include "SaveSubcircuitDialog.h"
+#include "SubCircuit.h"
+#include "SubCircuitItem.h"
+#include <QTabWidget>
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
 #include <QMessageBox>
-#include <QGraphicsScene>
-#include <QToolBar>
-#include <QPushButton>
-#include <utility>
 #include <QFileDialog>
+#include <QDir>
+#include <QCoreApplication>
+#include <QFileInfo>
+#include <QPushButton>
+#include <QToolBar>
+#include <utility>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent)
@@ -26,8 +34,12 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle(tr("ShariF Spice Simulator"));
     resize(1280, 720);
 
-    editor = new SchematicEditor(&circuit, this);
-    setCentralWidget(editor);
+    tabWidget = new QTabWidget(this);
+    tabWidget->setTabsClosable(true);
+    tabWidget->setMovable(true);
+    setCentralWidget(tabWidget);
+
+    connect(tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabClose);
 
     setupMenus();
 
@@ -41,10 +53,17 @@ MainWindow::MainWindow(QWidget *parent)
     componentCounters["H"] = 1;
     componentCounters["F"] = 1;
     componentCounters["GND"] = 1;
+    componentCounters["X"] = 1;
+
+    onFileNew();
+    populateLibraryMenu();
 }
 
 MainWindow::~MainWindow()
 {
+    for(const auto& doc : openDocuments) {
+        delete doc.circuit;
+    }
 }
 
 void MainWindow::setupMenus()
@@ -52,7 +71,9 @@ void MainWindow::setupMenus()
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(tr("&New"), this, &MainWindow::onFileNew);
     fileMenu->addAction(tr("&Open..."), this, &MainWindow::onFileOpen);
-    fileMenu->addAction(tr("&Save..."), this, &MainWindow::onFileSave);
+    fileMenu->addAction(tr("&Save"), this, &MainWindow::onFileSave);
+    fileMenu->addAction(tr("Save &As..."), this, &MainWindow::onFileSaveAs);
+    fileMenu->addAction(tr("Save As Subcircuit..."), this, &MainWindow::onSaveAsSubcircuit);
     fileMenu->addSeparator();
     fileMenu->addAction(tr("E&xit"), this, &QWidget::close);
 
@@ -76,66 +97,402 @@ void MainWindow::setupMenus()
     editMenu->addSeparator();
     QAction* wireAction = editMenu->addAction(tr("Add &Wire"));
     wireAction->setCheckable(true);
-    connect(wireAction, &QAction::toggled, editor, &SchematicEditor::toggleWiringMode);
+    connect(wireAction, &QAction::toggled, [this](bool checked){
+        if(getCurrentEditor()) getCurrentEditor()->toggleWiringMode(checked);
+    });
+
+    libraryMenu = menuBar()->addMenu(tr("&Library"));
+    libraryMenu->addAction(tr("Refresh Library"), this, &MainWindow::populateLibraryMenu);
+    libraryMenu->addSeparator();
 
     QMenu *simulateMenu = menuBar()->addMenu(tr("&Simulate"));
     simulateMenu->addAction(tr("&Run Simulation..."), this, &MainWindow::onRunSimulation);
-
-    QToolBar *toolBar = addToolBar(tr("Main Toolbar"));
-    QPushButton *runButton = new QPushButton(tr("Run Simulation..."), this);
-    connect(runButton, &QPushButton::clicked, this, &MainWindow::onRunSimulation);
-    toolBar->addWidget(runButton);
 
     menuBar()->addMenu(tr("&View"));
     menuBar()->addMenu(tr("Sco&pe"));
     menuBar()->addMenu(tr("&Help"));
 }
 
-void MainWindow::onFileNew()
-{
-    circuit.clear();
-    editor->populateSceneFromCircuit();
-    QMessageBox::information(this, "Action", "New circuit created.");
+SchematicEditor* MainWindow::getCurrentEditor() {
+    if (tabWidget->count() == 0) return nullptr;
+    return qobject_cast<SchematicEditor*>(tabWidget->currentWidget());
 }
 
-void MainWindow::onFileSave()
-{
-    for (QGraphicsItem* item : editor->scene()->items()) {
-        if (auto compItem = dynamic_cast<ComponentItem*>(item)) {
-            if (auto logicComp = compItem->getComponent()) {
-                logicComp->setPosition(compItem->pos().x(), compItem->pos().y());
+Circuit* MainWindow::getCurrentCircuit() {
+    int index = tabWidget->currentIndex();
+    if (index < 0 || index >= openDocuments.size()) return nullptr;
+    return openDocuments[index].circuit;
+}
+
+QString MainWindow::getCurrentFilePath() {
+    int index = tabWidget->currentIndex();
+    if (index < 0 || index >= openDocuments.size()) return "";
+    return openDocuments[index].filePath;
+}
+
+void MainWindow::onFileNew() {
+    Circuit* newCircuit = new Circuit();
+    SchematicEditor* newEditor = new SchematicEditor(newCircuit, this);
+    newEditor->setMainWindow(this);
+
+    Document newDoc = {newEditor, newCircuit, ""};
+    openDocuments.push_back(newDoc);
+
+    int newIndex = tabWidget->addTab(newEditor, "Untitled");
+    tabWidget->setCurrentIndex(newIndex);
+}
+
+void MainWindow::openFileInNewTab(const QString& filePath) {
+    for (int i = 0; i < openDocuments.size(); ++i) {
+        if (openDocuments[i].filePath == filePath) {
+            tabWidget->setCurrentIndex(i);
+            return;
+        }
+    }
+
+    Circuit* newCircuit = new Circuit();
+    try {
+        newCircuit->loadFromFile(filePath.toStdString());
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Load Error", e.what());
+        delete newCircuit;
+        return;
+    }
+
+    SchematicEditor* newEditor = new SchematicEditor(newCircuit, this);
+    newEditor->setMainWindow(this);
+    newEditor->populateSceneFromCircuit();
+
+    Document newDoc = {newEditor, newCircuit, filePath};
+    openDocuments.push_back(newDoc);
+
+    QFileInfo fileInfo(filePath);
+    int newIndex = tabWidget->addTab(newEditor, fileInfo.fileName());
+    tabWidget->setCurrentIndex(newIndex);
+}
+
+void MainWindow::onFileOpen() {
+    QString filePath = QFileDialog::getOpenFileName(this, "Open Circuit", "", "Circuit Files (*.cir *.sub);;All Files (*)");
+    if (!filePath.isEmpty()) {
+        openFileInNewTab(filePath);
+    }
+}
+
+void MainWindow::onFileSave() {
+    QString currentPath = getCurrentFilePath();
+    if (currentPath.isEmpty()) {
+        onFileSaveAs();
+    } else {
+        SchematicEditor* editor = getCurrentEditor();
+        Circuit* circuit = getCurrentCircuit();
+        if (!editor || !circuit) return;
+
+        editor->updateCircuitWires();
+        circuit->saveToFile(currentPath.toStdString());
+    }
+}
+
+void MainWindow::onFileSaveAs() {
+    SchematicEditor* editor = getCurrentEditor();
+    Circuit* circuit = getCurrentCircuit();
+    int index = tabWidget->currentIndex();
+    if (!editor || !circuit || index < 0) return;
+
+    QString filePath = QFileDialog::getSaveFileName(this, "Save As", "", "Circuit Files (*.cir);;Subcircuit Files (*.sub)");
+    if (!filePath.isEmpty()) {
+        editor->updateCircuitWires();
+        circuit->saveToFile(filePath.toStdString());
+
+        openDocuments[index].filePath = filePath;
+        QFileInfo fileInfo(filePath);
+        tabWidget->setTabText(index, fileInfo.fileName());
+    }
+}
+
+void MainWindow::onSaveAsSubcircuit() {
+    SchematicEditor* editor = getCurrentEditor();
+    Circuit* circuit = getCurrentCircuit();
+    if (!editor || !circuit) return;
+
+    editor->updateBackendNodes();
+
+    SaveSubcircuitDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        try {
+            QString fileName = dialog.getFileName();
+            std::vector<int> ports = dialog.getExternalPorts();
+
+            if (fileName.isEmpty()) throw std::invalid_argument("File name cannot be empty.");
+            if (ports.empty()) throw std::invalid_argument("At least one external port must be defined.");
+
+            unique_ptr<Circuit> subcircuitToSave = circuit->clone();
+            subcircuitToSave->setExternalPorts(ports);
+
+            QDir dir(QCoreApplication::applicationDirPath());
+            if (!dir.exists("library")) dir.mkdir("library");
+
+            QString libraryPath = dir.filePath("library");
+            QString filePath = QDir(libraryPath).filePath(fileName + ".sub");
+
+            subcircuitToSave->saveToFile(filePath.toStdString());
+            QMessageBox::information(this, "Success", "Subcircuit saved successfully.");
+            populateLibraryMenu();
+
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Error", e.what());
+        }
+    }
+}
+
+void MainWindow::onTabClose(int index) {
+    if (index < 0 || index >= openDocuments.size()) return;
+
+    Document docToClose = openDocuments[index];
+    delete docToClose.circuit;
+
+    openDocuments.erase(openDocuments.begin() + index);
+    tabWidget->removeTab(index);
+
+    if (openDocuments.empty()) {
+        onFileNew();
+    }
+}
+
+void MainWindow::populateLibraryMenu() {
+    if (!libraryMenu) return;
+
+    QList<QAction*> actions = libraryMenu->actions();
+    for (int i = 2; i < actions.size(); ++i) {
+        libraryMenu->removeAction(actions[i]);
+        delete actions[i];
+    }
+
+    QDir libraryDir(QCoreApplication::applicationDirPath() + "/library");
+    if (!libraryDir.exists()) return;
+
+    QStringList filters;
+    filters << "*.sub";
+    QFileInfoList subcircuitFiles = libraryDir.entryInfoList(filters, QDir::Files);
+
+    for (const QFileInfo& fileInfo : subcircuitFiles) {
+        QAction* addSubAction = new QAction(fileInfo.baseName(), this);
+        QString fullPath = fileInfo.absoluteFilePath();
+
+        connect(addSubAction, &QAction::triggered, this, [this, fullPath]() {
+            Circuit* currentCircuit = getCurrentCircuit();
+            SchematicEditor* currentEditor = getCurrentEditor();
+            if (!currentCircuit || !currentEditor) return;
+
+            try {
+                string name = getNextComponentName("X");
+
+                auto tempCircuit = make_unique<Circuit>();
+                tempCircuit->loadFromFile(fullPath.toStdString());
+                int portCount = tempCircuit->getExternalPorts().size();
+                if (portCount == 0) portCount = 2;
+
+                std::vector<int> initialNodes(portCount, -1);
+
+                auto logic_comp = make_unique<SubCircuit>(name, initialNodes, fullPath.toStdString());
+                Component* ptr = logic_comp.get();
+                currentCircuit->addComponent(std::move(logic_comp));
+                currentEditor->scene()->addItem(new SubCircuitItem(ptr));
+            } catch (const std::exception& e) {
+                QMessageBox::critical(this, "Error Loading Subcircuit", e.what());
             }
-        }
-    }
-    editor->updateCircuitWires();
+        });
 
-    QString filePath = QFileDialog::getSaveFileName(this, "Save Circuit", "", "Circuit Files (*.cir)");
-    if (!filePath.isEmpty()) {
+        libraryMenu->addAction(addSubAction);
+    }
+}
+
+std::string MainWindow::getNextComponentName(const std::string& prefix) {
+    int count = componentCounters[prefix];
+    componentCounters[prefix]++;
+    return prefix + std::to_string(count);
+}
+
+void MainWindow::onAddResistor() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("R");
+    auto logic_comp = make_unique<Resistor>(name, -1, -1, 1000.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new ResistorItem(ptr));
+}
+
+void MainWindow::onAddCapacitor() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("C");
+    auto logic_comp = make_unique<Capacitor>(name, -1, -1, 1e-6);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new CapacitorItem(ptr));
+}
+
+void MainWindow::onAddInductor() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("L");
+    auto logic_comp = make_unique<Inductor>(name, -1, -1, 1e-3);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new InductorItem(ptr));
+}
+
+void MainWindow::onAddVoltageSource() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("V");
+    auto logic_comp = make_unique<VoltageSource>(name, -1, -1, 5.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new VoltageSourceItem(ptr));
+}
+
+void MainWindow::onAddACVoltageSource() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("V");
+    auto logic_comp = make_unique<ACVoltageSource>(name, -1, -1, 1.0, 0.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new VoltageSourceItem(ptr));
+}
+
+void MainWindow::onAddCurrentSource() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("I");
+    auto logic_comp = make_unique<CurrentSource>(name, -1, -1, 1.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new CurrentSourceItem(ptr));
+}
+
+void MainWindow::onAddGround() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("GND");
+    auto logic_comp = make_unique<Ground>(name, 0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new GroundItem(ptr));
+}
+
+void MainWindow::onAddVCVS() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("E");
+    auto logic_comp = make_unique<VCVS>(name, -1, -1, -1, -1, 2.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new VCVSItem(ptr));
+}
+
+void MainWindow::onAddVCCS() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("G");
+    auto logic_comp = make_unique<VCCS>(name, -1, -1, -1, -1, 0.1);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new VCCSItem(ptr));
+}
+
+void MainWindow::onAddCCVS() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("H");
+    auto logic_comp = make_unique<CCVS>(name, -1, -1, "Vdummy", 10.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new CCVSItem(ptr));
+}
+
+void MainWindow::onAddCCCS() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("F");
+    auto logic_comp = make_unique<CCCS>(name, -1, -1, "Vdummy", 5.0);
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new CCCSItem(ptr));
+}
+
+void MainWindow::onAddSinusoidalSource() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("V");
+    auto tempSource = SinusoidalVoltageSource(name, -1, -1, 0, 5, 1000);
+    PropertiesDialog dialog(tempSource.getProperties(), this);
+    if (dialog.exec() == QDialog::Accepted) {
         try {
-            circuit.saveToFile(filePath.toStdString());
-            QMessageBox::information(this, "Success", "Circuit saved successfully!");
+            auto props = dialog.getProperties();
+            auto logic_comp = make_unique<SinusoidalVoltageSource>(name, -1, -1, props["Offset"], props["Amplitude"], props["Frequency"]);
+            Component* ptr = logic_comp.get();
+            circuit->addComponent(std::move(logic_comp));
+            editor->scene()->addItem(new VoltageSourceItem(ptr));
         } catch (const std::exception& e) {
-            QMessageBox::critical(this, "Save Error", e.what());
+            QMessageBox::warning(this, "Invalid Value", e.what());
         }
     }
 }
 
-void MainWindow::onFileOpen()
-{
-    QString filePath = QFileDialog::getOpenFileName(this, "Open Circuit", "", "Circuit Files (*.cir)");
-    if (!filePath.isEmpty()) {
+void MainWindow::onAddPulseSource() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("V");
+    auto tempSource = PulseVoltageSource(name, -1, -1, 0, 5, 0, 1e-9, 1e-9, 5e-7, 1e-6);
+    PropertiesDialog dialog(tempSource.getProperties(), this);
+    if (dialog.exec() == QDialog::Accepted) {
         try {
-            circuit.loadFromFile(filePath.toStdString());
-            editor->populateSceneFromCircuit();
-            QMessageBox::information(this, "Success", "Circuit loaded successfully!");
+            auto props = dialog.getProperties();
+            auto logic_comp = make_unique<PulseVoltageSource>(name, -1, -1,
+                                                              props["Initial Value"], props["Pulsed Value"], props["Delay"],
+                                                              props["Rise Time"], props["Fall Time"], props["Pulse Width"], props["Period"]);
+            Component* ptr = logic_comp.get();
+            circuit->addComponent(std::move(logic_comp));
+            editor->scene()->addItem(new VoltageSourceItem(ptr));
         } catch (const std::exception& e) {
-            QMessageBox::critical(this, "Load Error", e.what());
+            QMessageBox::warning(this, "Invalid Value", e.what());
         }
     }
 }
 
-void MainWindow::onRunSimulation()
-{
+void MainWindow::onRunSimulation() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
     SimulationDialog simDialog(this);
     if (simDialog.exec() == QDialog::Accepted) {
         editor->updateBackendNodes();
@@ -149,17 +506,15 @@ void MainWindow::onRunSimulation()
             int tabIndex = simDialog.getCurrentTabIndex();
             QString xAxisTitle;
 
-            // Step 1: Run the correct simulation
-            if (tabIndex == 0) { // Transient
-                circuit.runTransientAnalysis(simDialog.getStopTime(), simDialog.getTimeStep(), {}, simDialog.getStartTime());
+            if (tabIndex == 0) {
+                circuit->runTransientAnalysis(simDialog.getStopTime(), simDialog.getTimeStep(), {}, simDialog.getStartTime());
                 xAxisTitle = "Time (s)";
-            } else if (tabIndex == 1) { // AC Sweep
-                circuit.runACAnalysis(simDialog.getStartFreq(), simDialog.getStopFreq(), simDialog.getNumPoints(), simDialog.getSweepType());
+            } else if (tabIndex == 1) {
+                circuit->runACAnalysis(simDialog.getStartFreq(), simDialog.getStopFreq(), simDialog.getNumPoints(), simDialog.getSweepType());
                 xAxisTitle = "Frequency (Hz)";
             }
 
-            // Step 2: Get all results and prepare for selection
-            const auto& allResults = circuit.getSimulationResults();
+            const auto& allResults = circuit->getSimulationResults();
             if (allResults.empty() || allResults.begin()->second.empty()) {
                 QMessageBox::information(this, "Simulation Info", "Simulation ran, but no data was produced.");
                 return;
@@ -172,17 +527,14 @@ void MainWindow::onRunSimulation()
                 }
             }
 
-            // Step 3: Show the plot selection dialog
             PlotSelectionDialog plotDialog(availablePlots, this);
             if (plotDialog.exec() == QDialog::Accepted) {
                 QStringList selectedPlotNames = plotDialog.getSelectedPlots();
                 if (selectedPlotNames.isEmpty()) {
-                    return; // Do nothing if user selected no plots
+                    return;
                 }
 
-                // Step 4: Filter the results based on user selection
                 std::map<std::string, std::vector<double>> selectedResults;
-                // Always include the X-axis data
                 if (allResults.count("Time")) selectedResults["Time"] = allResults.at("Time");
                 if (allResults.count("Frequency")) selectedResults["Frequency"] = allResults.at("Frequency");
 
@@ -190,157 +542,12 @@ void MainWindow::onRunSimulation()
                     selectedResults[name.toStdString()] = allResults.at(name.toStdString());
                 }
 
-                // Step 5: Show the scope with only selected plots
                 m_scopeWindow = new ScopeWindow(selectedResults, xAxisTitle, this);
                 m_scopeWindow->show();
             }
 
         } catch (const std::exception& e) {
             QMessageBox::critical(this, "Simulation Error", e.what());
-        }
-    }
-}
-
-std::string MainWindow::getNextComponentName(const std::string& prefix)
-{
-    int count = componentCounters[prefix];
-    componentCounters[prefix]++;
-    return prefix + std::to_string(count);
-}
-
-void MainWindow::onAddResistor()
-{
-    string name = getNextComponentName("R");
-    auto logic_comp = make_unique<Resistor>(name, -1, -1, 1000.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new ResistorItem(ptr));
-}
-
-void MainWindow::onAddCapacitor()
-{
-    string name = getNextComponentName("C");
-    auto logic_comp = make_unique<Capacitor>(name, -1, -1, 1e-6);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new CapacitorItem(ptr));
-}
-
-void MainWindow::onAddInductor()
-{
-    string name = getNextComponentName("L");
-    auto logic_comp = make_unique<Inductor>(name, -1, -1, 1e-3);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new InductorItem(ptr));
-}
-
-void MainWindow::onAddVoltageSource()
-{
-    string name = getNextComponentName("V");
-    auto logic_comp = make_unique<VoltageSource>(name, -1, -1, 5.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new VoltageSourceItem(ptr));
-}
-
-void MainWindow::onAddACVoltageSource()
-{
-    string name = getNextComponentName("V");
-    auto logic_comp = make_unique<ACVoltageSource>(name, -1, -1, 1.0, 0.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new VoltageSourceItem(ptr));
-}
-
-void MainWindow::onAddCurrentSource()
-{
-    string name = getNextComponentName("I");
-    auto logic_comp = make_unique<CurrentSource>(name, -1, -1, 1.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new CurrentSourceItem(ptr));
-}
-
-void MainWindow::onAddGround()
-{
-    string name = getNextComponentName("GND");
-    auto logic_comp = make_unique<Ground>(name, 0, 0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new GroundItem(ptr));
-}
-
-void MainWindow::onAddVCVS()
-{
-    string name = getNextComponentName("E");
-    auto logic_comp = make_unique<VCVS>(name, -1, -1, -1, -1, 2.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new VCVSItem(ptr));
-}
-
-void MainWindow::onAddVCCS()
-{
-    string name = getNextComponentName("G");
-    auto logic_comp = make_unique<VCCS>(name, -1, -1, -1, -1, 0.1);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new VCCSItem(ptr));
-}
-
-void MainWindow::onAddCCVS()
-{
-    string name = getNextComponentName("H");
-    auto logic_comp = make_unique<CCVS>(name, -1, -1, "Vdummy", 10.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new CCVSItem(ptr));
-}
-
-void MainWindow::onAddCCCS()
-{
-    string name = getNextComponentName("F");
-    auto logic_comp = make_unique<CCCS>(name, -1, -1, "Vdummy", 5.0);
-    Component* ptr = logic_comp.get();
-    circuit.addComponent(std::move(logic_comp));
-    editor->scene()->addItem(new CCCSItem(ptr));
-}
-
-void MainWindow::onAddSinusoidalSource()
-{
-    string name = getNextComponentName("V");
-    auto tempSource = SinusoidalVoltageSource(name, -1, -1, 0, 5, 1000);
-    PropertiesDialog dialog(tempSource.getProperties(), this);
-    if (dialog.exec() == QDialog::Accepted) {
-        try {
-            auto props = dialog.getProperties();
-            auto logic_comp = make_unique<SinusoidalVoltageSource>(name, -1, -1, props["Offset"], props["Amplitude"], props["Frequency"]);
-            Component* ptr = logic_comp.get();
-            circuit.addComponent(std::move(logic_comp));
-            editor->scene()->addItem(new VoltageSourceItem(ptr));
-        } catch (const std::exception& e) {
-            QMessageBox::warning(this, "Invalid Value", e.what());
-        }
-    }
-}
-
-void MainWindow::onAddPulseSource()
-{
-    string name = getNextComponentName("V");
-    auto tempSource = PulseVoltageSource(name, -1, -1, 0, 5, 0, 1e-9, 1e-9, 5e-7, 1e-6);
-    PropertiesDialog dialog(tempSource.getProperties(), this);
-    if (dialog.exec() == QDialog::Accepted) {
-        try {
-            auto props = dialog.getProperties();
-            auto logic_comp = make_unique<PulseVoltageSource>(name, -1, -1,
-                                                              props["Initial Value"], props["Pulsed Value"], props["Delay"],
-                                                              props["Rise Time"], props["Fall Time"], props["Pulse Width"], props["Period"]);
-            Component* ptr = logic_comp.get();
-            circuit.addComponent(std::move(logic_comp));
-            editor->scene()->addItem(new VoltageSourceItem(ptr));
-        } catch (const std::exception& e) {
-            QMessageBox::warning(this, "Invalid Value", e.what());
         }
     }
 }

@@ -1,4 +1,5 @@
 #include "Circuit.h"
+#include "SubCircuit.h"
 #include <iostream>
 #include <iomanip>
 #include <set>
@@ -6,6 +7,7 @@
 #include <queue>
 #include <fstream>
 #include <cmath>
+#include <algorithm>
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
@@ -15,15 +17,23 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+unique_ptr<Circuit> Circuit::clone() const {
+    auto newCircuit = make_unique<Circuit>();
+    for (const auto& comp : components) {
+        newCircuit->addComponent(comp->clone());
+    }
+    newCircuit->wires = this->wires;
+    newCircuit->m_externalPorts = this->m_externalPorts;
+    return newCircuit;
+}
+
 void Circuit::saveToFile(const std::string& filepath) {
     std::ofstream os(filepath, std::ios::binary);
     if (!os) {
         throw std::runtime_error("Cannot open file for writing: " + filepath);
     }
     cereal::BinaryOutputArchive archive(os);
-
-    archive(components, wires);
-
+    archive(CEREAL_NVP(components), CEREAL_NVP(wires), CEREAL_NVP(m_externalPorts));
     std::cout << "Circuit saved successfully to " << filepath << std::endl;
 }
 
@@ -33,11 +43,8 @@ void Circuit::loadFromFile(const std::string& filepath) {
         throw std::runtime_error("Cannot open file for reading: " + filepath);
     }
     cereal::BinaryInputArchive archive(is);
-
     clear();
-
-    archive(components, wires);
-
+    archive(components, wires, m_externalPorts);
     std::cout << "Circuit loaded successfully from " << filepath << std::endl;
 }
 
@@ -46,21 +53,23 @@ const map<string, vector<double>>& Circuit::getSimulationResults() const {
 }
 
 void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars, double Tstart, double Tmaxstep) {
-    analyzeCircuit();
-    int matrix_size = nodeCount + currentVarCount;
+    unique_ptr<Circuit> flatCircuit = this->clone();
+    flatCircuit->analyzeCircuit();
+
+    int matrix_size = flatCircuit->nodeCount + flatCircuit->currentVarCount;
     if (matrix_size == 0) {
         cout << "Circuit is empty. Cannot run analysis." << endl;
         return;
     }
 
-    simulationResults.clear();
+    this->simulationResults.clear();
     double actual_tstep = Tstep;
     if (Tmaxstep > 0 && Tmaxstep < Tstep) {
         actual_tstep = Tmaxstep;
     }
 
     bool hasNonLinear = false;
-    for (const auto& comp : components) {
+    for (const auto& comp : flatCircuit->components) {
         if (comp->isNonLinear()) {
             hasNonLinear = true;
             break;
@@ -78,10 +87,10 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
             for (int i = 0; i < MAX_NR_ITER; ++i) {
                 MatrixXd A = MatrixXd::Zero(matrix_size, matrix_size);
                 VectorXd b = VectorXd::Zero(matrix_size);
-                for (const auto& comp : components) {
+                for (const auto& comp : flatCircuit->components) {
                     int final_current_idx = -1;
                     if (comp->addsCurrentVariable()) {
-                        final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
+                        final_current_idx = flatCircuit->nodeCount + flatCircuit->currentComponentMap.at(comp->getName()) - 1;
                     }
                     comp->stamp(A, b, x_nr_guess, final_current_idx, actual_tstep, t);
                 }
@@ -98,10 +107,10 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
         } else {
             MatrixXd A = MatrixXd::Zero(matrix_size, matrix_size);
             VectorXd b = VectorXd::Zero(matrix_size);
-            for (const auto& comp : components) {
+            for (const auto& comp : flatCircuit->components) {
                 int final_current_idx = -1;
                 if (comp->addsCurrentVariable()) {
-                    final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
+                    final_current_idx = flatCircuit->nodeCount + flatCircuit->currentComponentMap.at(comp->getName()) - 1;
                 }
                 comp->stamp(A, b, x_nr_guess, final_current_idx, actual_tstep, t);
             }
@@ -111,27 +120,27 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
         x = x_nr_guess;
 
         if (t >= Tstart) {
-            simulationResults["Time"].push_back(t);
-            for (int i = 0; i < nodeCount; ++i) {
+            this->simulationResults["Time"].push_back(t);
+            for (int i = 0; i < flatCircuit->nodeCount; ++i) {
                 string varName = "V(" + to_string(i + 1) + ")";
-                simulationResults[varName].push_back(x(i));
+                this->simulationResults[varName].push_back(x(i));
             }
-            for (const auto& pair : currentComponentMap) {
+            for (const auto& pair : flatCircuit->currentComponentMap) {
                 string varName = "I(" + pair.first + ")";
-                simulationResults[varName].push_back(x(nodeCount + pair.second - 1));
+                this->simulationResults[varName].push_back(x(flatCircuit->nodeCount + pair.second - 1));
             }
         }
 
         x_prev_t = x;
-        for (auto& comp : components) {
+        for (auto& comp : flatCircuit->components) {
             if (auto cap = dynamic_cast<Capacitor*>(comp.get())) {
-                double v1 = (cap->getNode1() > 0) ? x(cap->getNode1() - 1) : 0.0;
-                double v2 = (cap->getNode2() > 0) ? x(cap->getNode2() - 1) : 0.0;
+                double v1 = (cap->getNode(0) > 0) ? x(cap->getNode(0) - 1) : 0.0;
+                double v2 = (cap->getNode(1) > 0) ? x(cap->getNode(1) - 1) : 0.0;
                 cap->updateVoltage(v1 - v2);
             }
             if (auto ind = dynamic_cast<Inductor*>(comp.get())) {
-                int m_idx = currentComponentMap.at(ind->getName());
-                ind->updateCurrent(x(nodeCount + m_idx - 1));
+                int m_idx = flatCircuit->currentComponentMap.at(ind->getName());
+                ind->updateCurrent(x(flatCircuit->nodeCount + m_idx - 1));
             }
         }
     }
@@ -139,15 +148,17 @@ void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<Prin
 }
 
 void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, const string& sweepType, const vector<PrintVariable>& printVars) {
-    analyzeCircuit();
-    int matrix_size = nodeCount + currentVarCount;
+    unique_ptr<Circuit> flatCircuit = this->clone();
+    flatCircuit->analyzeCircuit();
+
+    int matrix_size = flatCircuit->nodeCount + flatCircuit->currentVarCount;
     if (matrix_size == 0) {
         cout << "Circuit is empty. Cannot run analysis." << endl;
         return;
     }
 
     bool hasACSource = false;
-    for (const auto& comp : components) {
+    for (const auto& comp : flatCircuit->components) {
         if (dynamic_cast<ACVoltageSource*>(comp.get())) {
             hasACSource = true;
             break;
@@ -157,22 +168,22 @@ void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, co
         throw runtime_error("AC analysis requires at least one AC Voltage Source in the circuit.");
     }
 
-    simulationResults.clear();
-    simulationResults["Frequency"];
+    this->simulationResults.clear();
+    this->simulationResults["Frequency"];
 
     if (printVars.empty()) {
-        for (int i = 0; i < nodeCount; ++i) {
-            simulationResults["V(" + to_string(i + 1) + ")"];
+        for (int i = 0; i < flatCircuit->nodeCount; ++i) {
+            this->simulationResults["V(" + to_string(i + 1) + ")"];
         }
-        for (const auto& pair : currentComponentMap) {
-            simulationResults["I(" + pair.first + ")"];
+        for (const auto& pair : flatCircuit->currentComponentMap) {
+            this->simulationResults["I(" + pair.first + ")"];
         }
     } else {
         for (const auto& var : printVars) {
             if (toupper(var.type) == 'V') {
-                simulationResults["V(" + var.id + ")"];
+                this->simulationResults["V(" + var.id + ")"];
             } else if (toupper(var.type) == 'I') {
-                simulationResults["I(" + var.id + ")"];
+                this->simulationResults["I(" + var.id + ")"];
             }
         }
     }
@@ -197,18 +208,18 @@ void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, co
         MatrixXcd A = MatrixXcd::Zero(matrix_size, matrix_size);
         VectorXcd b = VectorXcd::Zero(matrix_size);
 
-        for (const auto& comp : components) {
+        for (const auto& comp : flatCircuit->components) {
             int final_current_idx = -1;
             if (comp->addsCurrentVariable()) {
-                final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
+                final_current_idx = flatCircuit->nodeCount + flatCircuit->currentComponentMap.at(comp->getName()) - 1;
             }
             comp->stampAC(A, b, final_current_idx, omega);
         }
 
         VectorXcd x = A.colPivHouseholderQr().solve(b);
 
-        simulationResults["Frequency"].push_back(freq);
-        for (auto const& [key, val] : simulationResults) {
+        this->simulationResults["Frequency"].push_back(freq);
+        for (auto const& [key, val] : this->simulationResults) {
             if (key == "Frequency") continue;
 
             char type = toupper(key[0]);
@@ -216,15 +227,15 @@ void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, co
 
             if (type == 'V') {
                 int nodeNum = stoi(id);
-                if (nodeNum > 0 && nodeNum <= nodeCount) {
+                if (nodeNum > 0 && nodeNum <= flatCircuit->nodeCount) {
                     double magnitude = std::abs(x(nodeNum - 1));
-                    simulationResults[key].push_back(magnitude);
+                    this->simulationResults[key].push_back(magnitude);
                 }
             } else if (type == 'I') {
-                if (currentComponentMap.count(id)) {
-                    int m_idx = currentComponentMap.at(id);
-                    double magnitude = std::abs(x(nodeCount + m_idx - 1));
-                    simulationResults[key].push_back(magnitude);
+                if (flatCircuit->currentComponentMap.count(id)) {
+                    int m_idx = flatCircuit->currentComponentMap.at(id);
+                    double magnitude = std::abs(x(flatCircuit->nodeCount + m_idx - 1));
+                    this->simulationResults[key].push_back(magnitude);
                 }
             }
         }
@@ -233,9 +244,10 @@ void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, co
 }
 
 void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars) {
-    analyzeCircuit();
+    unique_ptr<Circuit> flatCircuit = this->clone();
+    flatCircuit->analyzeCircuit();
 
-    Component* sweepSource = findComponent(sweepSourceName);
+    Component* sweepSource = flatCircuit->findComponent(sweepSourceName);
     if (!sweepSource) {
         throw runtime_error("Sweep source '" + sweepSourceName + "' not found.");
     }
@@ -251,7 +263,7 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
 
     const double h_dc = 1e12;
 
-    int matrix_size = nodeCount + currentVarCount;
+    int matrix_size = flatCircuit->nodeCount + flatCircuit->currentVarCount;
     if (matrix_size == 0) {
         cout << "Circuit is empty. Cannot run analysis." << endl;
         return;
@@ -264,14 +276,14 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
     for (const auto& var : printVars) {
         if (toupper(var.type) == 'V') {
             int nodeNum = stoi(var.id);
-            if (nodeNum > 0 && nodeNum <= nodeCount) {
+            if (nodeNum > 0 && nodeNum <= flatCircuit->nodeCount) {
                 printIndices.push_back(nodeNum - 1);
                 printHeaders.push_back("V(" + var.id + ")");
             }
         } else if (toupper(var.type) == 'I') {
-            if (currentComponentMap.count(var.id)) {
-                int m_idx = currentComponentMap.at(var.id);
-                printIndices.push_back(nodeCount + m_idx - 1);
+            if (flatCircuit->currentComponentMap.count(var.id)) {
+                int m_idx = flatCircuit->currentComponentMap.at(var.id);
+                printIndices.push_back(flatCircuit->nodeCount + m_idx - 1);
                 printHeaders.push_back("I(" + var.id + ")");
             }
         }
@@ -293,10 +305,10 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
         for (int i = 0; i < MAX_NR_ITER; ++i) {
             MatrixXd A = MatrixXd::Zero(matrix_size, matrix_size);
             VectorXd b = VectorXd::Zero(matrix_size);
-            for (const auto& comp : components) {
+            for (const auto& comp : flatCircuit->components) {
                 int final_current_idx = -1;
                 if (comp->addsCurrentVariable()) {
-                    final_current_idx = nodeCount + currentComponentMap.at(comp->getName()) - 1;
+                    final_current_idx = flatCircuit->nodeCount + flatCircuit->currentComponentMap.at(comp->getName()) - 1;
                 }
                 comp->stamp(A, b, x, final_current_idx, h_dc, 0.0);
             }
@@ -330,10 +342,13 @@ void Circuit::checkConnectivity() const {
     }
     map<int, vector<int>> adjList;
     for (const auto& comp : components) {
-        int n1 = comp->getNode1();
-        int n2 = comp->getNode2();
-        adjList[n1].push_back(n2);
-        adjList[n2].push_back(n1);
+        const auto& compNodes = comp->getNodes();
+        if (compNodes.size() >= 2) {
+            int n1 = compNodes[0];
+            int n2 = compNodes[1];
+            adjList[n1].push_back(n2);
+            adjList[n2].push_back(n1);
+        }
         if (auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
             adjList[vcvs->getCtrlNode1()].push_back(vcvs->getCtrlNode2());
             adjList[vcvs->getCtrlNode2()].push_back(vcvs->getCtrlNode1());
@@ -404,38 +419,45 @@ bool Circuit::hasComponent(const string& name) const {
 }
 
 bool Circuit::removeComponent(const string& name) {
-    for (auto it = components.begin(); it != components.end(); ++it) {
-        if ((*it)->getName() == name) {
-            components.erase(it);
-            return true;
-        }
+    auto it = std::remove_if(components.begin(), components.end(),
+                             [&](const unique_ptr<Component>& comp) {
+                                 return comp->getName() == name;
+                             });
+    if (it != components.end()) {
+        components.erase(it, components.end());
+        return true;
     }
     return false;
 }
 
 void Circuit::clear() {
     components.clear();
+    wires.clear();
+    m_externalPorts.clear();
     currentComponentMap.clear();
+    simulationResults.clear();
     nodeCount = 0;
     currentVarCount = 0;
     cout << "Circuit has been reset." << endl;
 }
 
+// --- پیاده‌سازی تابع گمشده ---
 set<int> Circuit::getNodes() const {
-    set<int> nodes;
+    set<int> nodes_set;
     for (const auto& comp : components) {
-        nodes.insert(comp->getNode1());
-        nodes.insert(comp->getNode2());
+        for (int node : comp->getNodes()) {
+            nodes_set.insert(node);
+        }
         if(auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
-            nodes.insert(vcvs->getCtrlNode1());
-            nodes.insert(vcvs->getCtrlNode2());
+            nodes_set.insert(vcvs->getCtrlNode1());
+            nodes_set.insert(vcvs->getCtrlNode2());
         }
         if(auto vccs = dynamic_cast<const VCCS*>(comp.get())) {
-            nodes.insert(vccs->getCtrlNode1());
-            nodes.insert(vccs->getCtrlNode2());
+            nodes_set.insert(vccs->getCtrlNode1());
+            nodes_set.insert(vccs->getCtrlNode2());
         }
     }
-    return nodes;
+    return nodes_set;
 }
 
 void Circuit::renameNode(int oldNode, int newNode) {
@@ -445,26 +467,21 @@ void Circuit::renameNode(int oldNode, int newNode) {
 }
 
 void Circuit::analyzeCircuit() {
-    set<int> nodes;
+    flattenCircuit();
+
+    set<int> final_nodes;
     currentVarCount = 0;
     currentComponentMap.clear();
     for (const auto& comp : components) {
-        nodes.insert(comp->getNode1());
-        nodes.insert(comp->getNode2());
-        if(auto vcvs = dynamic_cast<const VCVS*>(comp.get())) {
-            nodes.insert(vcvs->getCtrlNode1());
-            nodes.insert(vcvs->getCtrlNode2());
-        }
-        if(auto vccs = dynamic_cast<const VCCS*>(comp.get())) {
-            nodes.insert(vccs->getCtrlNode1());
-            nodes.insert(vccs->getCtrlNode2());
+        for (int node : comp->getNodes()) {
+            final_nodes.insert(node);
         }
         if (comp->addsCurrentVariable()) {
             currentVarCount++;
             currentComponentMap[comp->getName()] = currentVarCount;
         }
     }
-    nodeCount = nodes.empty() ? 0 : *nodes.rbegin();
+    nodeCount = final_nodes.empty() ? 0 : *final_nodes.rbegin();
 
     for (auto& comp : components) {
         string ctrlName = comp->getCtrlVName();
@@ -479,6 +496,71 @@ void Circuit::analyzeCircuit() {
     }
 
     checkConnectivity();
+}
+
+void Circuit::flattenCircuit() {
+    bool containsSubCircuits = true;
+
+    auto getMaxNode = [&]() {
+        int maxN = 0;
+        for (const auto& c : components) {
+            for (int n : c->getNodes()) {
+                if (n > maxN) maxN = n;
+            }
+        }
+        return maxN;
+    };
+
+    while (containsSubCircuits) {
+        auto it = std::find_if(components.begin(), components.end(), [](const unique_ptr<Component>& comp){
+            return dynamic_cast<SubCircuit*>(comp.get()) != nullptr;
+        });
+
+        if (it != components.end()) {
+            containsSubCircuits = true;
+
+            unique_ptr<Component> subComp_ptr = std::move(*it);
+            components.erase(it);
+            SubCircuit* sub = static_cast<SubCircuit*>(subComp_ptr.get());
+
+            unique_ptr<Circuit> internalCircuit = sub->loadInternalCircuit();
+            if (!internalCircuit) {
+                throw std::runtime_error("Could not load subcircuit file: " + sub->getDefinitionFile());
+            }
+
+            int nodeOffset = getMaxNode() + 1;
+            map<int, int> nodeMap;
+
+            const auto& externalPorts = internalCircuit->getExternalPorts();
+            const auto& subNodes = sub->getNodes();
+            for (size_t i = 0; i < externalPorts.size() && i < subNodes.size(); ++i) {
+                nodeMap[externalPorts[i]] = subNodes[i];
+            }
+
+            for (const auto& internal_comp_ptr : internalCircuit->getComponents()) {
+                unique_ptr<Component> newComp = internal_comp_ptr->clone();
+
+                vector<int> oldNodes = newComp->getNodes();
+                vector<int> newNodes;
+                for (int oldNode : oldNodes) {
+                    if (nodeMap.count(oldNode)) {
+                        newNodes.push_back(nodeMap.at(oldNode));
+                    } else {
+                        if (nodeMap.find(oldNode) == nodeMap.end()) {
+                            nodeMap[oldNode] = nodeOffset++;
+                        }
+                        newNodes.push_back(nodeMap.at(oldNode));
+                    }
+                }
+                newComp->setNodes(newNodes);
+
+                newComp->setName(sub->getName() + "." + newComp->getName());
+                components.push_back(std::move(newComp));
+            }
+        } else {
+            containsSubCircuits = false;
+        }
+    }
 }
 
 Component* Circuit::findComponent(const string& name) {

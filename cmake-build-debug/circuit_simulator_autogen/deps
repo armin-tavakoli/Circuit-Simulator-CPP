@@ -43,10 +43,15 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/Component.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/DiodeModel.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/PrintRequest.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/SaveSubcircuitDialog.cpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/SaveSubcircuitDialog.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/Simulator.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/Simulator.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/SubCircuit.cpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/SubCircuit.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/SubCircuitItem.cpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/SubCircuitItem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/ValueParser.h \
-	D:/Course/Current\ courses/OOP/circuit_simulator/WireInfo.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/capacitoritem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/capacitoritem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/cereal_registration.h \
@@ -266,6 +271,8 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/main.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/plotselectiondialog.cpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/plotselectiondialog.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/polylinewireitem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/polylinewireitem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/propertiesdialog.cpp \
@@ -276,6 +283,8 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Current\ courses/OOP/circuit_simulator/schematiceditor.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/scopewindow.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/scopewindow.h \
+	D:/Course/Current\ courses/OOP/circuit_simulator/simulationdialog.cpp \
+	D:/Course/Current\ courses/OOP/circuit_simulator/simulationdialog.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/terminalitem.cpp \
 	D:/Course/Current\ courses/OOP/circuit_simulator/terminalitem.h \
 	D:/Course/Current\ courses/OOP/circuit_simulator/transientdialog.cpp \
@@ -288,6 +297,8 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QRect \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QSize \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QSizeF \
+	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QString \
+	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QStringList \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \
@@ -472,6 +483,7 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/QGraphicsObject \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/QGraphicsView \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/QMainWindow \
+	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/QMenu \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qdialog.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qframe.h \
@@ -479,6 +491,7 @@ circuit_simulator_autogen/timestamp: \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qgraphicsscene.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qgraphicsview.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qmainwindow.h \
+	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qmenu.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qscrollarea.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qsizepolicy.h \
 	D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qtabwidget.h \

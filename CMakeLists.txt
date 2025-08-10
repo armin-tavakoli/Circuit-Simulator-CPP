@@ -65,6 +65,12 @@ add_executable(circuit_simulator
         simulationdialog.h
         plotselectiondialog.cpp
         plotselectiondialog.h
+        SubCircuit.cpp
+        SubCircuit.h
+        SubCircuitItem.cpp
+        SubCircuitItem.h
+        SaveSubcircuitDialog.cpp
+        SaveSubcircuitDialog.h
 )
 
 target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets Qt6::Charts)

@@ -18,6 +18,8 @@
 #include "voltagesourceitem.h"
 #include "currentsourceitem.h"
 #include "dependentsourceitems.h"
+#include "SubCircuit.h"
+#include "SubCircuitItem.h"
 
 
 SchematicEditor::SchematicEditor(Circuit* circuit, QWidget *parent)
@@ -50,11 +52,13 @@ void SchematicEditor::populateSceneFromCircuit()
         else if (auto l = dynamic_cast<Inductor*>(logic_comp)) { newItem = new InductorItem(l); }
         else if (auto vcvs = dynamic_cast<VCVS*>(logic_comp)) { newItem = new VCVSItem(vcvs); }
         else if (auto vccs = dynamic_cast<VCCS*>(logic_comp)) { newItem = new VCCSItem(vccs); }
-        else if (auto ccvs = dynamic_cast<CCVS*>(logic_comp)) { newItem = new CCVSItem(ccvs); }
+        else if (auto ccvs = dynamic_cast<CCVS*>(logic_comp)) { newItem = new CCCSItem(ccvs); }
         else if (auto cccs = dynamic_cast<CCCS*>(logic_comp)) { newItem = new CCCSItem(cccs); }
         else if (auto is = dynamic_cast<CurrentSource*>(logic_comp)) { newItem = new CurrentSourceItem(is); }
         else if (auto gnd = dynamic_cast<Ground*>(logic_comp)) { newItem = new GroundItem(gnd); }
+        else if (auto sub = dynamic_cast<SubCircuit*>(logic_comp)) { newItem = new SubCircuitItem(sub); }
         else if (auto vs = dynamic_cast<VoltageSource*>(logic_comp)) { newItem = new VoltageSourceItem(vs); }
+
 
         if (newItem) {
             newItem->setPos(logic_comp->getPosition());
@@ -132,8 +136,9 @@ void SchematicEditor::updateBackendNodes()
                 TerminalItem* t1 = compItem->terminal1();
                 TerminalItem* t2 = compItem->terminal2();
                 int n1 = terminalNodeMap.count(t1) ? terminalNodeMap.at(t1) : -1;
-                int n2 = terminalNodeMap.count(t2) ? terminalNodeMap.at(t2) : -1;
-                logicComp->setNodes(n1, n2);
+                int n2 = (t2 && t2->isVisible()) ? (terminalNodeMap.count(t2) ? terminalNodeMap.at(t2) : -1) : n1;
+
+                logicComp->setNodes({n1, n2});
             }
         }
     }

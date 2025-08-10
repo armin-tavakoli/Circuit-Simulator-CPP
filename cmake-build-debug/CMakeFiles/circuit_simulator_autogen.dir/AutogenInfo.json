@@ -409,9 +409,27 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/SaveSubcircuitDialog.h",
+			"MU",
+			"EWIEGA46WW/moc_SaveSubcircuitDialog.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/Simulator.h",
 			"MU",
 			"EWIEGA46WW/moc_Simulator.cpp",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/SubCircuit.h",
+			"MU",
+			"EWIEGA46WW/moc_SubCircuit.cpp",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/SubCircuitItem.h",
+			"MU",
+			"EWIEGA46WW/moc_SubCircuitItem.cpp",
 			null
 		],
 		[
@@ -475,6 +493,12 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/plotselectiondialog.h",
+			"MU",
+			"EWIEGA46WW/moc_plotselectiondialog.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/polylinewireitem.h",
 			"MU",
 			"EWIEGA46WW/moc_polylinewireitem.cpp",
@@ -502,6 +526,12 @@
 			"D:/Course/Current courses/OOP/circuit_simulator/scopewindow.h",
 			"MU",
 			"EWIEGA46WW/moc_scopewindow.cpp",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/simulationdialog.h",
+			"MU",
+			"EWIEGA46WW/moc_simulationdialog.cpp",
 			null
 		],
 		[
@@ -612,7 +642,22 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/SaveSubcircuitDialog.cpp",
+			"MU",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/Simulator.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/SubCircuit.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/SubCircuitItem.cpp",
 			"MU",
 			null
 		],
@@ -657,6 +702,11 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/plotselectiondialog.cpp",
+			"MU",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/polylinewireitem.cpp",
 			"MU",
 			null
@@ -678,6 +728,11 @@
 		],
 		[
 			"D:/Course/Current courses/OOP/circuit_simulator/scopewindow.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/simulationdialog.cpp",
 			"MU",
 			null
 		],

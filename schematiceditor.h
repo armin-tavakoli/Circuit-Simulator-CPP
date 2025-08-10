@@ -6,7 +6,7 @@
 #include <set>
 #include <QList>
 #include <map>
-#include <QKeyEvent> // <-- ۱. هدر رویدادهای کیبورد را اضافه کنید
+#include <QKeyEvent>
 
 // Forward declarations
 class TerminalItem;
@@ -16,6 +16,7 @@ class QGraphicsLineItem;
 class QMouseEvent;
 class Circuit;
 class ComponentItem;
+class MainWindow; // <-- Forward declaration for MainWindow
 
 class SchematicEditor : public QGraphicsView
 {
@@ -27,6 +28,9 @@ public:
     void updateCircuitWires();
     void updateBackendNodes();
 
+    // تابع جدید برای اتصال به پنجره اصلی
+    void setMainWindow(MainWindow* window) { m_mainWindow = window; }
+
 public slots:
     void toggleWiringMode(bool enabled);
 
@@ -34,20 +38,18 @@ protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-
-    // --- ۲. تعریف تابع جدید برای مدیریت رویدادهای کیبورد ---
+    void mouseReleaseEvent(QMouseEvent *event) override; // <-- اعلان تابع اضافه شد
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
     enum class WiringState { NotWiring, DrawingWire };
     WiringState m_wiringState;
     Circuit* m_circuit;
+    MainWindow* m_mainWindow = nullptr; // <-- اشاره‌گر به پنجره اصلی
     PolylineWireItem *m_currentWire = nullptr;
     QList<QGraphicsLineItem*> m_tempPreviewSegments;
     std::vector<std::set<TerminalItem*>> m_logicalNodes;
 
-    // Helper Functions
     TerminalItem* getTerminalAt(const QPoint& pos);
     QPointF snapToGrid(const QPointF& pos);
     void registerLogicalConnection(TerminalItem* term1, TerminalItem* term2);
