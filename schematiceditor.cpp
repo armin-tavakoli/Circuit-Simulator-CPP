@@ -1,4 +1,5 @@
 #include "schematiceditor.h"
+#include "mainwindow.h"
 #include <QPainter>
 #include <QGraphicsScene>
 #include <QMouseEvent>
@@ -20,17 +21,28 @@
 #include "dependentsourceitems.h"
 #include "SubCircuit.h"
 #include "SubCircuitItem.h"
+#include "nodelabelitem.h"
 
 
 SchematicEditor::SchematicEditor(Circuit* circuit, QWidget *parent)
         : QGraphicsView(parent), m_circuit(circuit)
 {
     setScene(new QGraphicsScene(this));
+    scene()->setBackgroundBrush(QColor(40, 40, 40));
     scene()->setSceneRect(-5000, -5000, 10000, 10000);
     setRenderHint(QPainter::Antialiasing);
     setMouseTracking(true);
-    m_wiringState = WiringState::NotWiring;
+    m_editorState = EditorState::Normal;
 }
+
+void SchematicEditor::setEditorMode(EditorState newState) {
+    if (m_editorState == EditorState::Wiring && newState != EditorState::Wiring) {
+        cancelWiring();
+    }
+    m_editorState = newState;
+}
+
+
 
 void SchematicEditor::populateSceneFromCircuit()
 {
@@ -89,35 +101,71 @@ void SchematicEditor::populateSceneFromCircuit()
     }
 }
 
-void SchematicEditor::updateCircuitWires()
-{
-    if (!m_circuit) return;
-    m_circuit->getWires().clear();
-    for (QGraphicsItem* item : scene()->items()) {
-        if (auto wireItem = dynamic_cast<PolylineWireItem*>(item)) {
-            WireInfo info;
-            TerminalItem* startTerm = wireItem->getStartTerminal();
-            TerminalItem* endTerm = wireItem->getEndTerminal();
-            if (startTerm && endTerm && startTerm->getParentComponent() && endTerm->getParentComponent()) {
-                info.startCompName = startTerm->getParentComponent()->getComponent()->getName();
-                info.startTerminalId = startTerm->getId();
-                info.endCompName = endTerm->getParentComponent()->getComponent()->getName();
-                info.endTerminalId = endTerm->getId();
-                for(const QPointF& p : wireItem->getPoints()) {
-                    info.points.push_back({p.x(), p.y()});
-                }
-                m_circuit->getWires().push_back(info);
+TerminalItem* SchematicEditor::getTerminalNear(const QPointF& scenePos) {
+    double minDistance = 15.0;
+    TerminalItem* closestTerminal = nullptr;
+
+    for (QGraphicsItem* item : items(QRectF(scenePos - QPointF(minDistance, minDistance), QSizeF(minDistance*2, minDistance*2)).toRect())) {
+        if (auto term = dynamic_cast<TerminalItem*>(item)) {
+            double dist = QLineF(scenePos, term->scenePos()).length();
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestTerminal = term;
             }
         }
     }
+    return closestTerminal;
 }
+
 
 void SchematicEditor::updateBackendNodes()
 {
     if (!m_circuit) return;
+    std::map<std::string, std::set<TerminalItem*>> labelMap;
+
+    for (QGraphicsItem* item : scene()->items()) {
+        if (auto label = dynamic_cast<NodeLabelItem*>(item)) {
+            std::string labelName = label->toPlainText().toStdString();
+            TerminalItem* attachedTerminal = getTerminalNear(label->scenePos());
+            if (attachedTerminal) {
+                for (const auto& nodeSet : m_logicalNodes) {
+                    if (nodeSet.count(attachedTerminal)) {
+                        labelMap[labelName].insert(nodeSet.begin(), nodeSet.end());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    std::vector<std::set<TerminalItem*>> finalNodes = m_logicalNodes;
+    for (const auto& pair : labelMap) {
+        const auto& terminalsToMerge = pair.second;
+        if (terminalsToMerge.size() <= 1) continue;
+
+        std::set<int> indicesOfSetsToMerge;
+        for (TerminalItem* term : terminalsToMerge) {
+            for (size_t i = 0; i < finalNodes.size(); ++i) {
+                if (finalNodes[i].count(term)) {
+                    indicesOfSetsToMerge.insert(i);
+                }
+            }
+        }
+
+        if (indicesOfSetsToMerge.size() > 1) {
+            int targetIndex = *indicesOfSetsToMerge.begin();
+            auto it = std::next(indicesOfSetsToMerge.begin());
+            for (; it != indicesOfSetsToMerge.end(); ++it) {
+                finalNodes[targetIndex].insert(finalNodes[*it].begin(), finalNodes[*it].end());
+                finalNodes[*it].clear();
+            }
+        }
+    }
+    finalNodes.erase(std::remove_if(finalNodes.begin(), finalNodes.end(), [](const auto& s){ return s.empty(); }), finalNodes.end());
+
     std::map<TerminalItem*, int> terminalNodeMap;
     int nextNodeId = 1;
-    for (const auto& nodeSet : m_logicalNodes) {
+    for (const auto& nodeSet : finalNodes) {
         bool isGroundNode = false;
         for (TerminalItem* term : nodeSet) {
             if (dynamic_cast<GroundItem*>(term->getParentComponent())) {
@@ -130,6 +178,7 @@ void SchematicEditor::updateBackendNodes()
             terminalNodeMap[term] = currentNodeId;
         }
     }
+
     for (QGraphicsItem* item : scene()->items()) {
         if (auto compItem = dynamic_cast<ComponentItem*>(item)) {
             if (auto logicComp = compItem->getComponent()) {
@@ -137,12 +186,11 @@ void SchematicEditor::updateBackendNodes()
                 TerminalItem* t2 = compItem->terminal2();
                 int n1 = terminalNodeMap.count(t1) ? terminalNodeMap.at(t1) : -1;
                 int n2 = (t2 && t2->isVisible()) ? (terminalNodeMap.count(t2) ? terminalNodeMap.at(t2) : -1) : n1;
-
                 logicComp->setNodes({n1, n2});
             }
         }
     }
-    qDebug() << "Backend nodes updated!";
+    qDebug() << "Backend nodes updated! Final node count:" << finalNodes.size();
 }
 
 void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
@@ -162,51 +210,78 @@ void SchematicEditor::drawBackground(QPainter *painter, const QRectF &rect)
 
 void SchematicEditor::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::RightButton && m_wiringState == WiringState::DrawingWire) {
-        cancelWiring();
-        return;
-    }
-
-    if (m_wiringState == WiringState::NotWiring) {
-        if (event->button() == Qt::LeftButton) {
-            if (auto startTerminal = getTerminalAt(event->pos())) {
-                m_currentWire = new PolylineWireItem(startTerminal);
-                scene()->addItem(m_currentWire);
-                m_wiringState = WiringState::DrawingWire;
-            }
-        }
-    } else if (m_wiringState == WiringState::DrawingWire) {
-        if (event->button() == Qt::LeftButton) {
-            QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
-            if (auto endTerminal = getTerminalAt(event->pos())) {
-                if (endTerminal != m_currentWire->getStartTerminal()) {
-                    TerminalItem* startTerm = m_currentWire->getStartTerminal();
-                    QPointF lastP = m_currentWire->lastPoint();
-                    m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
-                    m_currentWire->setEndTerminal(endTerminal);
-
-                    m_currentWire = nullptr;
-                    m_wiringState = WiringState::NotWiring;
-
-                    registerLogicalConnection(startTerm, endTerminal);
+    switch (m_editorState)
+    {
+        case EditorState::Normal:
+            if (event->button() == Qt::LeftButton) {
+                if (auto startTerminal = getTerminalAt(event->pos())) {
+                    m_currentWire = new PolylineWireItem(startTerminal);
+                    scene()->addItem(m_currentWire);
+                    m_editorState = EditorState::Wiring;
                 } else {
-                    cancelWiring();
+                    QGraphicsView::mousePressEvent(event);
                 }
             } else {
-                QPointF lastP = m_currentWire->lastPoint();
-                m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
-                m_currentWire->addPoint(snappedPos);
+                QGraphicsView::mousePressEvent(event);
             }
-        }
+            break;
+
+        case EditorState::Wiring:
+            if (event->button() == Qt::RightButton) {
+                cancelWiring();
+                return;
+            }
+
+            if (event->button() == Qt::LeftButton) {
+                QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
+                if (auto endTerminal = getTerminalAt(event->pos())) {
+                    if (endTerminal != m_currentWire->getStartTerminal()) {
+                        TerminalItem* startTerm = m_currentWire->getStartTerminal();
+                        QPointF lastP = m_currentWire->lastPoint();
+                        m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
+                        m_currentWire->setEndTerminal(endTerminal);
+
+                        registerLogicalConnection(startTerm, endTerminal);
+
+                        m_currentWire = nullptr;
+                        m_editorState = EditorState::Normal;
+                    } else {
+                        cancelWiring();
+                    }
+                } else {
+                    QPointF lastP = m_currentWire->lastPoint();
+                    m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
+                    m_currentWire->addPoint(snappedPos);
+                }
+            }
+            break;
+
+        case EditorState::Probing:
+            if (event->button() == Qt::LeftButton) {
+                QGraphicsItem* item = itemAt(event->pos());
+                if (auto compItem = dynamic_cast<ComponentItem*>(item)) {
+                    string varName = "I(" + compItem->getComponent()->getName() + ")";
+                    if (m_mainWindow) m_mainWindow->plotVariable(QString::fromStdString(varName));
+                } else {
+                    updateBackendNodes();
+                    QPointF scenePos = mapToScene(event->pos());
+                    int nodeId = findNodeAt(scenePos);
+                    if (nodeId > 0) {
+                        string varName = "V(" + to_string(nodeId) + ")";
+                        if (m_mainWindow) m_mainWindow->plotVariable(QString::fromStdString(varName));
+                    }
+                }
+            }
+            return;
     }
 
     clearPreviewSegments();
-    QGraphicsView::mousePressEvent(event);
 }
+
 
 void SchematicEditor::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_wiringState == WiringState::DrawingWire) {
+    if (m_editorState == EditorState::Wiring) {
         clearPreviewSegments();
 
         QPointF currentPos = snapToGrid(mapToScene(event->pos()));
@@ -241,7 +316,7 @@ void SchematicEditor::cancelWiring()
         m_currentWire = nullptr;
     }
     clearPreviewSegments();
-    m_wiringState = WiringState::NotWiring;
+    m_editorState = EditorState::Normal;
 }
 
 void SchematicEditor::clearPreviewSegments()
@@ -299,47 +374,131 @@ void SchematicEditor::mouseReleaseEvent(QMouseEvent *event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
+int SchematicEditor::findNodeAt(const QPointF& scenePos) {
+    TerminalItem* closestTerminal = nullptr;
+    double minDistance = 100.0;
+
+    for (QGraphicsItem* item : scene()->items()) {
+        if (auto term = dynamic_cast<TerminalItem*>(item)) {
+            double dist = QLineF(scenePos, term->scenePos()).length();
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestTerminal = term;
+            }
+        }
+    }
+
+    if (closestTerminal && minDistance < 20.0) {
+        for (const auto& nodeSet : m_logicalNodes) {
+            if (nodeSet.count(closestTerminal)) {
+                Component* comp = closestTerminal->getParentComponent()->getComponent();
+                int termId = closestTerminal->getId();
+                return comp->getNode(termId);
+            }
+        }
+    }
+    return -1;
+}
+
+void SchematicEditor::updateCircuitWires()
+{
+    if (!m_circuit) return;
+    m_circuit->getWires().clear();
+
+    for (QGraphicsItem* item : scene()->items()) {
+        if (auto wireItem = dynamic_cast<PolylineWireItem*>(item)) {
+            WireInfo info;
+            TerminalItem* startTerm = wireItem->getStartTerminal();
+            TerminalItem* endTerm = wireItem->getEndTerminal();
+
+            if (startTerm && endTerm && startTerm->getParentComponent() && endTerm->getParentComponent()) {
+                info.startCompName = startTerm->getParentComponent()->getComponent()->getName();
+                info.startTerminalId = startTerm->getId();
+                info.endCompName = endTerm->getParentComponent()->getComponent()->getName();
+                info.endTerminalId = endTerm->getId();
+
+                for(const QPointF& p : wireItem->getPoints()) {
+                    info.points.push_back({p.x(), p.y()});
+                }
+                m_circuit->getWires().push_back(info);
+            }
+        }
+    }
+}
+
 void SchematicEditor::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_Escape) {
+        if (m_editorState == EditorState::Wiring) {
+            cancelWiring();
+            return;
+        }
+    }
+
+    if (m_editorState == EditorState::Normal) {
+        if (m_mainWindow) {
+            switch (event->key()) {
+                case Qt::Key_R: m_mainWindow->onAddResistor(); return;
+                case Qt::Key_C: m_mainWindow->onAddCapacitor(); return;
+                case Qt::Key_L: m_mainWindow->onAddInductor(); return;
+                case Qt::Key_V: m_mainWindow->onAddVoltageSource(); return;
+                case Qt::Key_I: m_mainWindow->onAddCurrentSource(); return;
+                case Qt::Key_G: m_mainWindow->onAddGround(); return;
+            }
+        }
+    }
+
     if (event->key() == Qt::Key_Delete) {
-        QList<QGraphicsItem*> selected = scene()->selectedItems();
-        if (selected.isEmpty()) {
+        const QList<QGraphicsItem*> selectedItems = scene()->selectedItems();
+        if (selectedItems.isEmpty()) {
             QGraphicsView::keyPressEvent(event);
             return;
         }
-
         QSet<PolylineWireItem*> wiresToDelete;
-
-        for (QGraphicsItem* item : selected) {
+        QList<ComponentItem*> componentsToDelete;
+        QList<NodeLabelItem*> labelsToDelete;
+        for (QGraphicsItem* item : selectedItems) {
             if (auto compItem = qgraphicsitem_cast<ComponentItem*>(item)) {
-                for (auto wire : compItem->terminal1()->getWires()) {
-                    wiresToDelete.insert(wire);
+                componentsToDelete.append(compItem);
+                if (compItem->terminal1()) {
+                    for (auto wire : compItem->terminal1()->getWires()) wiresToDelete.insert(wire);
                 }
-                if (compItem->terminal2()->isVisible()) {
-                    for (auto wire : compItem->terminal2()->getWires()) {
-                        wiresToDelete.insert(wire);
-                    }
+                if (compItem->terminal2() && compItem->terminal2()->isVisible()) {
+                    for (auto wire : compItem->terminal2()->getWires()) wiresToDelete.insert(wire);
                 }
             } else if (auto wireItem = qgraphicsitem_cast<PolylineWireItem*>(item)) {
                 wiresToDelete.insert(wireItem);
+            } else if (auto labelItem = qgraphicsitem_cast<NodeLabelItem*>(item)) {
+                labelsToDelete.append(labelItem);
             }
         }
 
-        for (PolylineWireItem* wire : wiresToDelete) {
-            scene()->removeItem(wire);
-            delete wire;
-        }
 
-        for (QGraphicsItem* item : selected) {
-            if (auto compItem = qgraphicsitem_cast<ComponentItem*>(item)) {
-                if (compItem->getComponent()) {
-                    m_circuit->removeComponent(compItem->getComponent()->getName());
-                }
-                scene()->removeItem(compItem);
-                delete compItem;
-            }
+        for (PolylineWireItem* wire : wiresToDelete) delete wire;
+        for (ComponentItem* comp : componentsToDelete) {
+            if (comp->getComponent()) m_circuit->removeComponent(comp->getComponent()->getName());
+            delete comp;
         }
+        for (NodeLabelItem* label : labelsToDelete) delete label;
+
+        return;
+    }
+    QGraphicsView::keyPressEvent(event);
+}
+
+void SchematicEditor::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (m_editorState == EditorState::Wiring) {
+        QPointF snappedPos = snapToGrid(mapToScene(event->pos()));
+        QPointF lastP = m_currentWire->lastPoint();
+        m_currentWire->addPoint(QPointF(snappedPos.x(), lastP.y()));
+        m_currentWire->addPoint(snappedPos);
+
+        m_currentWire = nullptr;
+        m_editorState = EditorState::Normal;
+        clearPreviewSegments();
+        event->accept();
     } else {
-        QGraphicsView::keyPressEvent(event);
+        QGraphicsView::mouseDoubleClickEvent(event);
     }
 }

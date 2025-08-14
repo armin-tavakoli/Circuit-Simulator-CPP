@@ -12,7 +12,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Charts Network)
 
 include_directories(${CMAKE_SOURCE_DIR}/eigen-3.4.0)
 include_directories(${CMAKE_SOURCE_DIR}/libs)
@@ -49,6 +49,7 @@ add_executable(circuit_simulator
         scopewindow.cpp
         Circuit.h
         Circuit.cpp
+        Circuit_serialization.cpp
         Component.h
         Component.cpp
         Simulator.h
@@ -71,6 +72,14 @@ add_executable(circuit_simulator
         SubCircuitItem.h
         SaveSubcircuitDialog.cpp
         SaveSubcircuitDialog.h
+        mathoperationsdialog.h
+        mathoperationsdialog.cpp
+        nodelabelitem.h
+        nodelabelitem.cpp
+        server.h
+        server.cpp
+        client.h
+        client.cpp
 )
 
-target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets Qt6::Charts)
+target_link_libraries(circuit_simulator PRIVATE Qt6::Widgets Qt6::Charts Qt6::Network)

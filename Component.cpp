@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cereal/types/polymorphic.hpp>
-
+#include <fstream>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -208,7 +208,11 @@ map<string, double> SinusoidalVoltageSource::getProperties() const {
 }
 string SinusoidalVoltageSource::getDisplayValue() const { return "SIN"; }
 void SinusoidalVoltageSource::print() const { cout << "Type: SIN Source, Name: " << name << ", Nodes: (" << getNode(0) << "," << getNode(1) << "), SIN(" << v_offset << " " << v_amplitude << " " << freq << "Hz)" << endl; }
-string SinusoidalVoltageSource::toNetlistString() const { stringstream ss; ss << name << " " << getNode(0) << " " << getNode(1) << " SIN ( " << v_offset << " " << v_amplitude << " " << freq << " )"; return ss.str(); }
+string SinusoidalVoltageSource::toNetlistString() const {
+    stringstream ss;
+    ss << name << " " << getNode(0) << " " << getNode(1) << " SIN ( " << v_offset << " " << v_amplitude << " " << freq << " )";
+    return ss.str();
+}
 void SinusoidalVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = getNode(0) - 1;
     int n2 = getNode(1) - 1;
@@ -240,7 +244,11 @@ map<string, double> PulseVoltageSource::getProperties() const {
 }
 string PulseVoltageSource::getDisplayValue() const { return "PULSE"; }
 void PulseVoltageSource::print() const { cout << "Type: PULSE Source, Name: " << name << ", Nodes: (" << getNode(0) << "," << getNode(1) << "), PULSE(...)" << endl; }
-string PulseVoltageSource::toNetlistString() const { stringstream ss; ss << name << " " << getNode(0) << " " << getNode(1) << " PULSE ( " << v_initial << " " << v_pulsed << " " << t_delay << " " << t_rise << " " << t_fall << " " << t_pulse_width << " " << t_period << " )"; return ss.str(); }
+string PulseVoltageSource::toNetlistString() const {
+    stringstream ss;
+    ss << name << " " << getNode(0) << " " << getNode(1) << " PULSE ( " << v_initial << " " << v_pulsed << " " << t_delay << " " << t_rise << " " << t_fall << " " << t_pulse_width << " " << t_period << " )";
+    return ss.str();
+}
 double PulseVoltageSource::calculate_voltage_at(double t) const {
     if (t_period <= 0) {
         if (t <= t_delay) return v_initial;
@@ -358,7 +366,13 @@ void CCVS::setProperties(const map<string, double>& properties) { if (properties
 map<string, double> CCVS::getProperties() const { return {{"Gain", gain}}; }
 string CCVS::getDisplayValue() const { return "Gain=" + formatValue(gain); }
 void CCVS::print() const { cout << "Type: CCVS, Name: " << name << ", Out: (" << getNode(0) << "," << getNode(1) << "), Control Current: I(" << ctrlVName << "), Gain=" << gain << endl; }
-string CCVS::toNetlistString() const { return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " " + ctrlVName + " " + to_string(gain); }
+string CCVS::toNetlistString() const {
+    if (ctrlVName.empty()) {
+        return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " V_dummy " + to_string(gain);
+    }
+    return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " " + ctrlVName + " " + to_string(gain);
+}
+
 void CCVS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = getNode(0) - 1; int n2 = getNode(1) - 1;
     if (n1 >= 0) A(current_idx, n1) = 1.0;
@@ -382,7 +396,13 @@ void CCCS::setProperties(const map<string, double>& properties) { if (properties
 map<string, double> CCCS::getProperties() const { return {{"Gain", gain}}; }
 string CCCS::getDisplayValue() const { return "Gain=" + formatValue(gain); }
 void CCCS::print() const { cout << "Type: CCCS, Name: " << name << ", Out: (" << getNode(0) << "->" << getNode(1) << "), Control Current: I(" << ctrlVName << "), Gain=" << gain << endl; }
-string CCCS::toNetlistString() const { return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " " + ctrlVName + " " + to_string(gain); }
+string CCCS::toNetlistString() const {
+    if (ctrlVName.empty()) {
+        return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " V_dummy " + to_string(gain);
+    }
+    return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " " + ctrlVName + " " + to_string(gain);
+}
+
 void CCCS::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
     int n1 = getNode(0) - 1;
     int n2 = getNode(1) - 1;
@@ -407,3 +427,78 @@ string Ground::toNetlistString() const { return name + " " + to_string(getNode(0
 void Ground::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) { /* Ground does not stamp */ }
 void Ground::stampAC(MatrixXcd& A, VectorXcd& b, int current_idx, double omega) const { /* Ground does not stamp */ }
 
+
+WaveformVoltageSource::WaveformVoltageSource(const string& name, int n1, int n2, const string& filePath)
+        : VoltageSource(name, n1, n2, 0.0), m_filePath(filePath) {
+    loadWaveformFromFile();
+}
+
+void WaveformVoltageSource::loadWaveformFromFile() {
+    ifstream file(m_filePath);
+    if (!file.is_open()) {
+        throw runtime_error("Could not open waveform file: " + m_filePath);
+    }
+    m_waveform.clear();
+    string line;
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string timeStr, voltageStr;
+        if (getline(ss, timeStr, ',') && getline(ss, voltageStr)) {
+            try {
+                m_waveform[stod(timeStr)] = stod(voltageStr);
+            } catch (const invalid_argument& e) {
+
+            }
+        }
+    }
+}
+
+double WaveformVoltageSource::getVoltageAt(double t) const {
+    if (m_waveform.empty()) return 0.0;
+
+    auto it = m_waveform.upper_bound(t);
+    if (it == m_waveform.begin()) {
+        return it->second;
+    }
+    it--;
+    return it->second;
+}
+
+void WaveformVoltageSource::print() const {
+    cout << "Type: Waveform Source, Name: " << name << ", File: " << m_filePath << endl;
+}
+
+string WaveformVoltageSource::toNetlistString() const {
+    return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " WAVEFORM " + m_filePath;
+}
+
+string WaveformVoltageSource::getDisplayValue() const {
+    return "WAVE";
+}
+
+void WaveformVoltageSource::stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) {
+    int n1 = getNode(0) - 1;
+    int n2 = getNode(1) - 1;
+    double instantaneous_voltage = getVoltageAt(t);
+
+    if (n1 >= 0) A(current_idx, n1) = 1.0;
+    if (n2 >= 0) A(current_idx, n2) = -1.0;
+    b(current_idx) = instantaneous_voltage;
+    if (n1 >= 0) A(n1, current_idx) = 1.0;
+    if (n2 >= 0) A(n2, current_idx) = -1.0;
+}
+
+WirelessVoltageSource::WirelessVoltageSource(const string& name, int n1, int n2)
+        : VoltageSource(name, n1, n2, 0.0) {}
+
+void WirelessVoltageSource::print() const {
+    cout << "Type: Wireless Source, Name: " << name << ", Nodes: (" << getNode(0) << "," << getNode(1) << ")" << endl;
+}
+
+string WirelessVoltageSource::toNetlistString() const {
+    return name + " " + to_string(getNode(0)) + " " + to_string(getNode(1)) + " WIRELESS";
+}
+
+string WirelessVoltageSource::getDisplayValue() const {
+    return "WIFI: " + formatValue(voltage) + "V";
+}

@@ -210,6 +210,39 @@ private:
     double calculate_voltage_at(double t) const;
 };
 
+class WaveformVoltageSource : public VoltageSource {
+public:
+    WaveformVoltageSource() = default;
+    WaveformVoltageSource(const string& name, int n1, int n2, const string& filePath);
+    unique_ptr<Component> clone() const override { return make_unique<WaveformVoltageSource>(*this); }
+    void print() const override;
+    void stamp(MatrixXd& A, VectorXd& b, const VectorXd& x_prev_nr, int current_idx, double h, double t) override;
+    string toNetlistString() const override;
+    string getDisplayValue() const override;
+
+    template<class Archive>
+    void serialize(Archive & ar) {
+        ar(cereal::base_class<VoltageSource>(this), CEREAL_NVP(m_filePath), CEREAL_NVP(m_waveform));
+    }
+
+private:
+    string m_filePath;
+    map<double, double> m_waveform;
+    void loadWaveformFromFile();
+    double getVoltageAt(double t) const;
+};
+
+class WirelessVoltageSource : public VoltageSource {
+public:
+    WirelessVoltageSource(const std::string& name, int n1, int n2);
+    unique_ptr<Component> clone() const override { return make_unique<WirelessVoltageSource>(*this); }
+    void print() const override;
+    string toNetlistString() const override;
+    string getDisplayValue() const override;
+
+    void setWirelessVoltage(double v) { this->voltage = v; }
+};
+
 class Diode : public Component {
 public:
     Diode() : Is(0.0), Vt(0.0), n(0.0), Vz(0.0) {}

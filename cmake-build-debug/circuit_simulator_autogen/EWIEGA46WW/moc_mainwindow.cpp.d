@@ -1,5 +1,9 @@
 D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/EWIEGA46WW/moc_mainwindow.cpp: D:/Course/Current\ courses/OOP/circuit_simulator/mainwindow.h \
   D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simulator_autogen/moc_predefs.h \
+  D:/Course/Current\ courses/OOP/circuit_simulator/client.h \
+  D:/Course/Current\ courses/OOP/circuit_simulator/server.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QObject \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/QTimer \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q17memory.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20functional.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20iterator.h \
@@ -7,6 +11,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20type_traits.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q20utility.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/q23utility.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qalgorithms.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qanystringview.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qarraydata.h \
@@ -16,6 +21,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qatomic.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qatomic_cxx11.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbasicatomic.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbasictimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbindingstorage.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbytearray.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qbytearrayalgorithms.h \
@@ -34,8 +40,11 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qcontiguouscache.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdarwinhelpers.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdatastream.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdeadlinetimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qdebug.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qelapsedtimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qendian.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qeventloop.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qexceptionhandling.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qflags.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qfloat16.h \
@@ -47,6 +56,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qglobalstatic.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qhash.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qhashfunctions.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiodevice.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiodevicebase.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiterable.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qiterator.h \
@@ -109,6 +119,7 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtenvironmentvariables.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtextstream.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtformat_impl.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtimer.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtmetamacros.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtnoop.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCore/qtpreprocessorsupport.h \
@@ -151,6 +162,15 @@ D:/Course/Current\ courses/OOP/circuit_simulator/cmake-build-debug/circuit_simul
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qtransform.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qwindowdefs.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtGui/qwindowdefs_win.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/QTcpServer \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/QTcpSocket \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qabstractsocket.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qhostaddress.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qtcpserver.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qtcpsocket.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qtnetwork-config.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qtnetworkexports.h \
+  D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork/qtnetworkglobal.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/QMainWindow \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qmainwindow.h \
   D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtWidgets/qsizepolicy.h \

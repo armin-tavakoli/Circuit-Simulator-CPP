@@ -376,7 +376,45 @@
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6ChartsPrivate/Qt6ChartsPrivateTargets.cmake",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6ChartsPrivate/Qt6ChartsPrivateAdditionalTargetInfo.cmake",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6ChartsPrivate/Qt6ChartsPrivateVersionlessAliasTargets.cmake",
-		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Charts/Qt6ChartsVersionlessAliasTargets.cmake"
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Charts/Qt6ChartsVersionlessAliasTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkConfigVersion.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkConfigVersionImpl.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkConfig.cmake",
+		"C:/Program Files/JetBrains/CLion 2024.3.3/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkDependencies.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkTargets-relwithdebinfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkAdditionalTargetInfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateConfigVersion.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateConfigVersionImpl.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateConfig.cmake",
+		"C:/Program Files/JetBrains/CLion 2024.3.3/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateDependencies.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateAdditionalTargetInfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6NetworkPrivate/Qt6NetworkPrivateVersionlessAliasTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkPlugins.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QNLMNIPluginConfig.cmake",
+		"C:/Program Files/JetBrains/CLion 2024.3.3/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QNLMNIPluginTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QNLMNIPluginTargets-relwithdebinfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QNLMNIPluginAdditionalTargetInfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QSchannelBackendPluginConfig.cmake",
+		"C:/Program Files/JetBrains/CLion 2024.3.3/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QSchannelBackendPluginTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QSchannelBackendPluginTargets-relwithdebinfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QSchannelBackendPluginAdditionalTargetInfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendCertOnlyPluginConfig.cmake",
+		"C:/Program Files/JetBrains/CLion 2024.3.3/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendCertOnlyPluginTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendCertOnlyPluginTargets-relwithdebinfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendCertOnlyPluginAdditionalTargetInfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginConfig.cmake",
+		"C:/Program Files/JetBrains/CLion 2024.3.3/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginTargets.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginTargets-relwithdebinfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6QTlsBackendOpenSSLPluginAdditionalTargetInfo.cmake",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/lib/cmake/Qt6Network/Qt6NetworkVersionlessAliasTargets.cmake"
 	],
 	"CMAKE_SOURCE_DIR" : "D:/Course/Current courses/OOP/circuit_simulator",
 	"CROSS_CONFIG" : false,
@@ -451,6 +489,12 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/client.h",
+			"MU",
+			"EWIEGA46WW/moc_client.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/componentitem.h",
 			"MU",
 			"EWIEGA46WW/moc_componentitem.cpp",
@@ -493,6 +537,18 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/mathoperationsdialog.h",
+			"MU",
+			"EWIEGA46WW/moc_mathoperationsdialog.cpp",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/nodelabelitem.h",
+			"MU",
+			"EWIEGA46WW/moc_nodelabelitem.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/plotselectiondialog.h",
 			"MU",
 			"EWIEGA46WW/moc_plotselectiondialog.cpp",
@@ -529,6 +585,12 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/server.h",
+			"MU",
+			"EWIEGA46WW/moc_server.cpp",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/simulationdialog.h",
 			"MU",
 			"EWIEGA46WW/moc_simulationdialog.cpp",
@@ -562,6 +624,7 @@
 		"QT_CHARTS_LIB",
 		"QT_CORE_LIB",
 		"QT_GUI_LIB",
+		"QT_NETWORK_LIB",
 		"QT_OPENGLWIDGETS_LIB",
 		"QT_OPENGL_LIB",
 		"QT_WIDGETS_LIB",
@@ -591,6 +654,7 @@
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtCharts",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtOpenGL",
 		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtOpenGLWidgets",
+		"D:/Course/Currentcourses/OOP/Qt/6.9.1/mingw_64/include/QtNetwork",
 		"D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++",
 		"D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32",
 		"D:/Course/Currentcourses/OOP/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward",
@@ -637,6 +701,11 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/Circuit_serialization.cpp",
+			"MU",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/Component.cpp",
 			"MU",
 			null
@@ -663,6 +732,11 @@
 		],
 		[
 			"D:/Course/Current courses/OOP/circuit_simulator/capacitoritem.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/client.cpp",
 			"MU",
 			null
 		],
@@ -702,6 +776,16 @@
 			null
 		],
 		[
+			"D:/Course/Current courses/OOP/circuit_simulator/mathoperationsdialog.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/nodelabelitem.cpp",
+			"MU",
+			null
+		],
+		[
 			"D:/Course/Current courses/OOP/circuit_simulator/plotselectiondialog.cpp",
 			"MU",
 			null
@@ -728,6 +812,11 @@
 		],
 		[
 			"D:/Course/Current courses/OOP/circuit_simulator/scopewindow.cpp",
+			"MU",
+			null
+		],
+		[
+			"D:/Course/Current courses/OOP/circuit_simulator/server.cpp",
 			"MU",
 			null
 		],

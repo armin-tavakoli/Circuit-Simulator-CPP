@@ -5,8 +5,11 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "server.h"
+#include "client.h"
+#include <QTimer>
 
-// Forward declarations
+class WirelessVoltageSource;
 class SchematicEditor;
 class Circuit;
 class ScopeWindow;
@@ -22,8 +25,9 @@ public:
     ~MainWindow();
 
     void openFileInNewTab(const QString& filePath);
+    void plotVariable(const QString& varName);
 
-private slots:
+public slots:
     void onFileNew();
     void onFileOpen();
     void onFileSave();
@@ -45,11 +49,28 @@ private slots:
     void onAddVCCS();
     void onAddCCVS();
     void onAddCCCS();
+    void onAddWaveformSource();
+    void onAddNodeLabel();
+    void onStartServer();
+    void onConnectToServer();
+    void onAddWirelessSource();
+    void onVoltageReceived(double voltage);
+    void onBroadcastSignal();
+    void onSelectSignalToBroadcast();
+    void logNetworkMessage(const QString& msg);
 
 private:
     void setupMenus();
     void populateLibraryMenu();
+    Server* m_server = nullptr;
+    QMenu* m_networkMenu = nullptr;
+    QTimer* m_broadcastTimer = nullptr;
+    std::vector<double> m_signalToBroadcast;
+    int m_broadcastIndex = 0;
     std::string getNextComponentName(const std::string& prefix);
+
+    Client* m_client = nullptr;
+    WirelessVoltageSource* m_wirelessSource = nullptr;
 
     SchematicEditor* getCurrentEditor();
     Circuit* getCurrentCircuit();

@@ -19,6 +19,11 @@
 using namespace std;
 using namespace Eigen;
 
+struct TheveninEquivalent {
+    double Vth = 0.0;
+    double Rth = 0.0;
+};
+
 class Circuit {
 public:
     Circuit() = default;
@@ -30,8 +35,10 @@ public:
     void printCircuit(char type = 'A') const;
     void runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars = {}, double Tstart = 0.0, double Tmaxstep = 0.0);
     void runACAnalysis(double startFreq, double stopFreq, int numPoints, const string& sweepType, const vector<PrintVariable>& printVars = {});
+    void runPhaseAnalysis(double baseFreq, double startPhase, double stopPhase, int numPoints, const vector<PrintVariable>& printVars = {});
     void runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars);
     void clear();
+    TheveninEquivalent calculateTheveninEquivalent(int port1_node, int port2_node);
 
     set<int> getNodes() const;
     int getNodeCount() const { return nodeCount; }

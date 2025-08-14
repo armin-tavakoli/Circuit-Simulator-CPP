@@ -1,6 +1,9 @@
 #include "SubCircuit.h"
 #include "Circuit.h"
 #include <stdexcept>
+#include <iostream>
+#include <QString>
+#include <QFileInfo>
 
 SubCircuit::SubCircuit(const std::string& name, const std::vector<int>& externalNodes, const std::string& definitionFile)
         : Component(name, externalNodes), m_definitionFile(definitionFile) {}
@@ -28,16 +31,19 @@ void SubCircuit::stampAC(MatrixXcd&, VectorXcd&, int, double) const {
 }
 
 string SubCircuit::toNetlistString() const {
-    std::string str = "X" + name;
+    std::string str = name;
     for (int node : nodes) {
         str += " " + std::to_string(node);
     }
-    std::string defName = m_definitionFile;
-    size_t pos = defName.rfind(".");
-    if (pos != std::string::npos) {
-        defName = defName.substr(0, pos);
+    if (m_definitionFile.empty()) {
+        str += " EMPTY_DEF";
+        return str;
     }
-    str += " " + defName;
+    QString fullPath = QString::fromStdString(m_definitionFile);
+    QFileInfo fileInfo(fullPath);
+    std::string definitionName = fileInfo.baseName().toStdString();
+
+    str += " " + definitionName;
     return str;
 }
 

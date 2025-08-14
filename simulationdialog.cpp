@@ -18,6 +18,7 @@ SimulationDialog::SimulationDialog(QWidget *parent)
     tabWidget = new QTabWidget;
     createTransientTab();
     createAcSweepTab();
+    createPhaseSweepTab();
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -65,6 +66,24 @@ void SimulationDialog::createAcSweepTab()
     acTab->setLayout(formLayout);
     tabWidget->addTab(acTab, tr("AC Sweep"));
 }
+void SimulationDialog::createPhaseSweepTab()
+{
+    QWidget *phaseTab = new QWidget;
+    QFormLayout *formLayout = new QFormLayout;
+
+    baseFreqEdit = new QLineEdit("1k");
+    startPhaseEdit = new QLineEdit("0");
+    stopPhaseEdit = new QLineEdit("360");
+    numPointsPhaseEdit = new QLineEdit("100");
+
+    formLayout->addRow(new QLabel(tr("Base Frequency (Hz):")), baseFreqEdit);
+    formLayout->addRow(new QLabel(tr("Start Phase (deg):")), startPhaseEdit);
+    formLayout->addRow(new QLabel(tr("Stop Phase (deg):")), stopPhaseEdit);
+    formLayout->addRow(new QLabel(tr("Number of Points:")), numPointsPhaseEdit);
+
+    phaseTab->setLayout(formLayout);
+    tabWidget->addTab(phaseTab, tr("Phase Sweep"));
+}
 
 int SimulationDialog::getCurrentTabIndex() const { return tabWidget->currentIndex(); }
 
@@ -76,3 +95,8 @@ double SimulationDialog::getStartFreq() const { return parseValue(startFreqEdit-
 double SimulationDialog::getStopFreq() const { return parseValue(stopFreqEdit->text().toStdString()); }
 int SimulationDialog::getNumPoints() const { return numPointsEdit->text().toInt(); }
 std::string SimulationDialog::getSweepType() const { return sweepTypeCombo->currentText().toStdString(); }
+
+double SimulationDialog::getBaseFreq() const { return parseValue(baseFreqEdit->text().toStdString()); }
+double SimulationDialog::getStartPhase() const { return parseValue(startPhaseEdit->text().toStdString()); }
+double SimulationDialog::getStopPhase() const { return parseValue(stopPhaseEdit->text().toStdString()); }
+int SimulationDialog::getNumPointsPhase() const { return numPointsPhaseEdit->text().toInt(); }

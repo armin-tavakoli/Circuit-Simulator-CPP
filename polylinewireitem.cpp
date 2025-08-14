@@ -7,6 +7,8 @@
 PolylineWireItem::PolylineWireItem(TerminalItem *startTerminal, QGraphicsItem *parent)
         : QGraphicsObject(parent), m_startTerminal(startTerminal), m_endTerminal(nullptr)
 {
+    setFlag(QGraphicsItem::ItemIsSelectable);
+
     setZValue(1);
     if (m_startTerminal) {
         m_points.append(m_startTerminal->scenePos());
@@ -63,9 +65,12 @@ QRectF PolylineWireItem::boundingRect() const { return QPolygonF(m_points.toVect
 void PolylineWireItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option); Q_UNUSED(widget);
-    QPen pen(Qt::green, 2);
+    QPen pen(isSelected() ? Qt::cyan : Qt::green, 2);
+
     painter->setPen(pen);
-    if (m_points.size() >= 2) painter->drawPolyline(QPolygonF(m_points.toVector()));
+    if (m_points.size() >= 2) {
+        painter->drawPolyline(QPolygonF(m_points.toVector()));
+    }
 }
 
 const QList<QPointF>& PolylineWireItem::getPoints() const { return m_points; }

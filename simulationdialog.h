@@ -28,11 +28,17 @@ public:
     double getStopFreq() const;
     int getNumPoints() const;
     std::string getSweepType() const;
+    // Phase Sweep getters
+    double getBaseFreq() const;
+    double getStartPhase() const;
+    double getStopPhase() const;
+    int getNumPointsPhase() const;
 
 
 private:
     void createTransientTab();
     void createAcSweepTab();
+    void createPhaseSweepTab();
 
     QTabWidget *tabWidget;
     QDialogButtonBox *buttonBox;
@@ -47,6 +53,11 @@ private:
     QLineEdit *stopFreqEdit;
     QLineEdit *numPointsEdit;
     QComboBox *sweepTypeCombo;
+
+    QLineEdit *baseFreqEdit;
+    QLineEdit *startPhaseEdit;
+    QLineEdit *stopPhaseEdit;
+    QLineEdit *numPointsPhaseEdit;
 };
 
 #endif // SIMULATIONDIALOG_H

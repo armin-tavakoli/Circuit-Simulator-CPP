@@ -26,7 +26,13 @@
 #include <QFileInfo>
 #include <QPushButton>
 #include <QToolBar>
+#include <QDebug>
 #include <utility>
+#include "nodelabelitem.h"
+#include <QInputDialog>
+#include <QStatusBar>
+#include <QNetworkInterface>
+#include <QStatusBar>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent)
@@ -43,6 +49,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupMenus();
 
+    m_server = new Server(this);
+    connect(m_server, &Server::logMessage, this, &MainWindow::logNetworkMessage);
+
+    m_client = new Client(this);
+    connect(m_client, &Client::logMessage, this, &MainWindow::logNetworkMessage);
+    connect(m_client, &Client::voltageReceived, this, &MainWindow::onVoltageReceived);
+
+    m_broadcastTimer = new QTimer(this);
+    connect(m_broadcastTimer, &QTimer::timeout, this, &MainWindow::onBroadcastSignal);
+
     componentCounters["R"] = 1;
     componentCounters["C"] = 1;
     componentCounters["L"] = 1;
@@ -55,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
     componentCounters["GND"] = 1;
     componentCounters["X"] = 1;
 
+    setStatusBar(new QStatusBar(this));
     onFileNew();
     populateLibraryMenu();
 }
@@ -86,6 +103,8 @@ void MainWindow::setupMenus()
     editMenu->addAction(tr("Add AC Voltage Source"), this, &MainWindow::onAddACVoltageSource);
     editMenu->addAction(tr("Add &Sinusoidal Source"), this, &MainWindow::onAddSinusoidalSource);
     editMenu->addAction(tr("Add &Pulse Source"), this, &MainWindow::onAddPulseSource);
+    editMenu->addAction(tr("Add &Waveform Source..."), this, &MainWindow::onAddWaveformSource);
+    editMenu->addAction(tr("Add &Wireless Source"), this, &MainWindow::onAddWirelessSource);
     editMenu->addAction(tr("Add DC &Current Source"), this, &MainWindow::onAddCurrentSource);
     editMenu->addSeparator();
     editMenu->addAction(tr("Add VCVS (E)"), this, &MainWindow::onAddVCVS);
@@ -94,11 +113,20 @@ void MainWindow::setupMenus()
     editMenu->addAction(tr("Add CCCS (F)"), this, &MainWindow::onAddCCCS);
     editMenu->addSeparator();
     editMenu->addAction(tr("Add &Ground"), this, &MainWindow::onAddGround);
+    editMenu->addAction(tr("Add Node &Label"), this, &MainWindow::onAddNodeLabel);
     editMenu->addSeparator();
     QAction* wireAction = editMenu->addAction(tr("Add &Wire"));
     wireAction->setCheckable(true);
     connect(wireAction, &QAction::toggled, [this](bool checked){
         if(getCurrentEditor()) getCurrentEditor()->toggleWiringMode(checked);
+    });
+
+    QAction* probeAction = editMenu->addAction(tr("Voltage Probe"));
+    probeAction->setCheckable(true);
+    connect(probeAction, &QAction::toggled, [this](bool checked){
+        if(getCurrentEditor()) {
+            getCurrentEditor()->setEditorMode(checked ? SchematicEditor::EditorState::Probing : SchematicEditor::EditorState::Normal);
+        }
     });
 
     libraryMenu = menuBar()->addMenu(tr("&Library"));
@@ -109,6 +137,10 @@ void MainWindow::setupMenus()
     simulateMenu->addAction(tr("&Run Simulation..."), this, &MainWindow::onRunSimulation);
 
     menuBar()->addMenu(tr("&View"));
+    m_networkMenu = menuBar()->addMenu(tr("&Network"));
+    m_networkMenu->addAction(tr("Start Server..."), this, &MainWindow::onStartServer);
+    m_networkMenu->addAction(tr("Connect to Server..."), this, &MainWindow::onConnectToServer);
+    m_networkMenu->addAction(tr("Broadcast Signal..."), this, &MainWindow::onSelectSignalToBroadcast);
     menuBar()->addMenu(tr("Sco&pe"));
     menuBar()->addMenu(tr("&Help"));
 }
@@ -210,32 +242,49 @@ void MainWindow::onFileSaveAs() {
 }
 
 void MainWindow::onSaveAsSubcircuit() {
-    SchematicEditor* editor = getCurrentEditor();
     Circuit* circuit = getCurrentCircuit();
-    if (!editor || !circuit) return;
+    if (!circuit) return;
 
-    editor->updateBackendNodes();
+    bool isResistive = true;
+    for (const auto& comp : circuit->getComponents()) {
+        if (dynamic_cast<Capacitor*>(comp.get()) || dynamic_cast<Inductor*>(comp.get()) ||
+            dynamic_cast<ACVoltageSource*>(comp.get())) {
+            isResistive = false;
+            break;
+        }
+    }
 
+    if (!isResistive) {
+        QMessageBox::warning(this, "Thevenin Conversion Skipped",
+                             "The circuit contains reactive components (L, C) or AC sources.\n"
+                             "It will be saved as a standard subcircuit.");
+        return;
+    }
     SaveSubcircuitDialog dialog(this);
     if (dialog.exec() == QDialog::Accepted) {
         try {
             QString fileName = dialog.getFileName();
             std::vector<int> ports = dialog.getExternalPorts();
+            if (ports.size() != 2) {
+                throw std::invalid_argument("Thevenin equivalent requires exactly two external ports.");
+            }
 
-            if (fileName.isEmpty()) throw std::invalid_argument("File name cannot be empty.");
-            if (ports.empty()) throw std::invalid_argument("At least one external port must be defined.");
+            TheveninEquivalent th_eq = circuit->calculateTheveninEquivalent(ports[0], ports[1]);
 
-            unique_ptr<Circuit> subcircuitToSave = circuit->clone();
-            subcircuitToSave->setExternalPorts(ports);
+            auto theveninCircuit = make_unique<Circuit>();
+            theveninCircuit->addComponent(make_unique<VoltageSource>("Vth", 1, 2, th_eq.Vth));
+            theveninCircuit->addComponent(make_unique<Resistor>("Rth", 2, 0, th_eq.Rth));
+            theveninCircuit->setExternalPorts({1, 0}); // پورت‌های خروجی مدار جدید
 
             QDir dir(QCoreApplication::applicationDirPath());
             if (!dir.exists("library")) dir.mkdir("library");
+            QString filePath = dir.filePath("library/" + fileName + ".sub");
 
-            QString libraryPath = dir.filePath("library");
-            QString filePath = QDir(libraryPath).filePath(fileName + ".sub");
-
-            subcircuitToSave->saveToFile(filePath.toStdString());
-            QMessageBox::information(this, "Success", "Subcircuit saved successfully.");
+            theveninCircuit->saveToFile(filePath.toStdString());
+            QMessageBox::information(this, "Success",
+                                     QString("Thevenin equivalent circuit saved successfully.\n"
+                                             "Vth = %1 V, Rth = %2 Ohm")
+                                             .arg(th_eq.Vth).arg(th_eq.Rth));
             populateLibraryMenu();
 
         } catch (const std::exception& e) {
@@ -384,6 +433,30 @@ void MainWindow::onAddCurrentSource() {
     editor->scene()->addItem(new CurrentSourceItem(ptr));
 }
 
+void MainWindow::onAddWaveformSource() {
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    QString filePath = QFileDialog::getOpenFileName(this,
+                                                    tr("Open Waveform File"), "", tr("Text Files (*.txt);;All Files (*)"));
+
+    if (!filePath.isEmpty()) {
+        try {
+            string name = getNextComponentName("V");
+
+            auto logic_comp = make_unique<WaveformVoltageSource>(name, -1, -1, filePath.toStdString());
+            Component* ptr = logic_comp.get();
+            circuit->addComponent(std::move(logic_comp));
+
+            editor->scene()->addItem(new VoltageSourceItem(ptr)); // از همان آیتم گرافیکی منبع ولتاژ استفاده می‌کنیم
+
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Error", e.what());
+        }
+    }
+}
+
 void MainWindow::onAddGround() {
     Circuit* circuit = getCurrentCircuit();
     SchematicEditor* editor = getCurrentEditor();
@@ -506,13 +579,21 @@ void MainWindow::onRunSimulation() {
             int tabIndex = simDialog.getCurrentTabIndex();
             QString xAxisTitle;
 
+            qDebug() << "[DEBUG] Starting analysis...";
+
             if (tabIndex == 0) {
                 circuit->runTransientAnalysis(simDialog.getStopTime(), simDialog.getTimeStep(), {}, simDialog.getStartTime());
                 xAxisTitle = "Time (s)";
             } else if (tabIndex == 1) {
                 circuit->runACAnalysis(simDialog.getStartFreq(), simDialog.getStopFreq(), simDialog.getNumPoints(), simDialog.getSweepType());
                 xAxisTitle = "Frequency (Hz)";
+            } else if (tabIndex == 2) {
+                circuit->runPhaseAnalysis(simDialog.getBaseFreq(), simDialog.getStartPhase(), simDialog.getStopPhase(), simDialog.getNumPointsPhase());
+                xAxisTitle = "Phase (deg)";
             }
+
+            // ------------ ایستگاه بازرسی ۲ ------------
+            qDebug() << "[DEBUG] Analysis finished. Getting results...";
 
             const auto& allResults = circuit->getSimulationResults();
             if (allResults.empty() || allResults.begin()->second.empty()) {
@@ -520,15 +601,25 @@ void MainWindow::onRunSimulation() {
                 return;
             }
 
+            // ------------ ایستگاه بازرسی ۳ ------------
+            qDebug() << "[DEBUG] Results are valid. Creating PlotSelectionDialog...";
+
             QStringList availablePlots;
             for(const auto& pair : allResults) {
-                if (pair.first != "Time" && pair.first != "Frequency") {
+                if (pair.first != "Time" && pair.first != "Frequency" && pair.first != "Phase") {
                     availablePlots.append(QString::fromStdString(pair.first));
                 }
             }
 
             PlotSelectionDialog plotDialog(availablePlots, this);
+
+            // ------------ ایستگاه بازرسی ۴ ------------
+            qDebug() << "[DEBUG] PlotSelectionDialog created. Executing...";
+
             if (plotDialog.exec() == QDialog::Accepted) {
+                // ------------ ایستگاه بازرسی ۵ ------------
+                qDebug() << "[DEBUG] PlotSelectionDialog accepted. Processing selected plots...";
+
                 QStringList selectedPlotNames = plotDialog.getSelectedPlots();
                 if (selectedPlotNames.isEmpty()) {
                     return;
@@ -537,17 +628,166 @@ void MainWindow::onRunSimulation() {
                 std::map<std::string, std::vector<double>> selectedResults;
                 if (allResults.count("Time")) selectedResults["Time"] = allResults.at("Time");
                 if (allResults.count("Frequency")) selectedResults["Frequency"] = allResults.at("Frequency");
+                if (allResults.count("Phase")) selectedResults["Phase"] = allResults.at("Phase");
 
                 for (const QString& name : selectedPlotNames) {
                     selectedResults[name.toStdString()] = allResults.at(name.toStdString());
                 }
 
+                // ------------ ایستگاه بازرسی ۶ ------------
+                qDebug() << "[DEBUG] Creating ScopeWindow...";
+
                 m_scopeWindow = new ScopeWindow(selectedResults, xAxisTitle, this);
+
+                // ------------ ایستگاه بازرسی ۷ ------------
+                qDebug() << "[DEBUG] Showing ScopeWindow...";
+
                 m_scopeWindow->show();
+
+                // ------------ ایستگاه بازرسی ۸ ------------
+                qDebug() << "[DEBUG] ScopeWindow is shown.";
+            } else {
+                qDebug() << "[DEBUG] PlotSelectionDialog was cancelled or closed.";
             }
 
         } catch (const std::exception& e) {
             QMessageBox::critical(this, "Simulation Error", e.what());
         }
+    }
+}
+
+void MainWindow::plotVariable(const QString& varName)
+{
+    if (!m_scopeWindow || !m_scopeWindow->isVisible()) {
+        QMessageBox::information(this, "Probe Info",
+                                 "Please run a simulation to open the scope window before using the probe.");
+        return;
+    }
+
+    Circuit* circuit = getCurrentCircuit();
+    if (!circuit) return;
+
+    const auto& allResults = circuit->getSimulationResults();
+    if (allResults.find(varName.toStdString()) == allResults.end()) {
+        QMessageBox::warning(this, "Probe Error", "Variable '" + varName + "' not found in the simulation results.");
+        return;
+    }
+
+    m_scopeWindow->addSeries(varName, allResults.at(varName.toStdString()));
+    m_scopeWindow->activateWindow();
+}
+
+void MainWindow::onAddNodeLabel()
+{
+    SchematicEditor* editor = getCurrentEditor();
+    if (!editor) return;
+    string name = getNextComponentName("LBL");
+    NodeLabelItem *label = new NodeLabelItem(QString::fromStdString(name));
+
+    label->setPos(editor->mapToScene(editor->viewport()->rect().center()));
+    editor->scene()->addItem(label);
+}
+
+void MainWindow::onStartServer()
+{
+    bool ok;
+    quint16 port = QInputDialog::getInt(this, "Start Server", "Enter port number:", 8080, 1024, 65535, 1, &ok);
+    if (ok) {
+        m_server->start(port);
+        const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
+        for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
+            if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
+                logNetworkMessage("Your local IP is: " + address.toString());
+        }
+    }
+}
+
+void MainWindow::logNetworkMessage(const QString& msg)
+{
+    statusBar()->showMessage(msg, 5000);
+}
+
+void MainWindow::onConnectToServer()
+{
+    bool ok;
+    QString ip = QInputDialog::getText(this, "Connect to Server", "Enter server IP:", QLineEdit::Normal, "127.0.0.1", &ok);
+    if (ok && !ip.isEmpty()) {
+        quint16 port = QInputDialog::getInt(this, "Connect to Server", "Enter port:", 8080, 1024, 65535, 1, &ok);
+        if (ok) {
+            m_client->connectToServer(ip, port);
+        }
+    }
+}
+
+void MainWindow::onAddWirelessSource()
+{
+    if (m_wirelessSource) {
+        QMessageBox::warning(this, "Error", "Only one wireless source can be added to the circuit.");
+        return;
+    }
+
+    Circuit* circuit = getCurrentCircuit();
+    SchematicEditor* editor = getCurrentEditor();
+    if (!circuit || !editor) return;
+
+    string name = getNextComponentName("V");
+    auto logic_comp = make_unique<WirelessVoltageSource>(name, -1, -1);
+    m_wirelessSource = logic_comp.get();
+    Component* ptr = logic_comp.get();
+    circuit->addComponent(std::move(logic_comp));
+    editor->scene()->addItem(new VoltageSourceItem(ptr));
+}
+
+void MainWindow::onVoltageReceived(double voltage)
+{
+    if (m_wirelessSource) {
+        m_wirelessSource->setWirelessVoltage(voltage);
+        if (auto editor = getCurrentEditor()) {
+            editor->scene()->update();
+        }
+    }
+}
+
+void MainWindow::onSelectSignalToBroadcast()
+{
+    Circuit* circuit = getCurrentCircuit();
+    if (!circuit) return;
+
+    const auto& allResults = circuit->getSimulationResults();
+    if (allResults.empty()) {
+        QMessageBox::warning(this, "Error", "No simulation data available to broadcast.");
+        return;
+    }
+
+    QStringList availablePlots;
+    for(const auto& pair : allResults) {
+        if (pair.first != "Time" && pair.first != "Frequency" && pair.first != "Phase") {
+            availablePlots.append(QString::fromStdString(pair.first));
+        }
+    }
+
+    bool ok;
+    QString selectedSignal = QInputDialog::getItem(this, "Select Signal",
+                                                   "Choose a signal to broadcast:", availablePlots, 0, false, &ok);
+
+    if (ok && !selectedSignal.isEmpty()) {
+        m_signalToBroadcast = allResults.at(selectedSignal.toStdString());
+        m_broadcastIndex = 0;
+        m_broadcastTimer->start(30);
+        logNetworkMessage("Broadcasting signal: " + selectedSignal);
+    }
+}
+
+void MainWindow::onBroadcastSignal()
+{
+    if (m_signalToBroadcast.empty() || !m_server) {
+        m_broadcastTimer->stop();
+        return;
+    }
+    double value = m_signalToBroadcast[m_broadcastIndex];
+    m_server->sendToClient(QString::number(value));
+    m_broadcastIndex++;
+    if (m_broadcastIndex >= m_signalToBroadcast.size()) {
+        m_broadcastIndex = 0;
     }
 }

@@ -38,10 +38,21 @@ template <> constexpr inline auto ScopeWindow::qt_create_metaobjectdata<qt_meta_
 {
     namespace QMC = QtMocConstants;
     QtMocHelpers::StringRefStorage qt_stringData {
-        "ScopeWindow"
+        "ScopeWindow",
+        "onAutoZoom",
+        "",
+        "handleLegendClicked",
+        "QLegendMarker*",
+        "marker"
     };
 
     QtMocHelpers::UintData qt_methods {
+        // Slot 'onAutoZoom'
+        QtMocHelpers::SlotData<void()>(1, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'handleLegendClicked'
+        QtMocHelpers::SlotData<void(QLegendMarker *)>(3, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 4, 5 },
+        }}),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -63,10 +74,13 @@ Q_CONSTINIT const QMetaObject ScopeWindow::staticMetaObject = { {
 void ScopeWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
     auto *_t = static_cast<ScopeWindow *>(_o);
-    (void)_t;
-    (void)_c;
-    (void)_id;
-    (void)_a;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: _t->onAutoZoom(); break;
+        case 1: _t->handleLegendClicked((*reinterpret_cast< std::add_pointer_t<QLegendMarker*>>(_a[1]))); break;
+        default: ;
+        }
+    }
 }
 
 const QMetaObject *ScopeWindow::metaObject() const
@@ -85,6 +99,18 @@ void *ScopeWindow::qt_metacast(const char *_clname)
 int ScopeWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QDialog::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        if (_id < 2)
+            qt_static_metacall(this, _c, _id, _a);
+        _id -= 2;
+    }
+    if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+        if (_id < 2)
+            *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
+        _id -= 2;
+    }
     return _id;
 }
 QT_WARNING_POP

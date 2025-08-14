@@ -23,13 +23,13 @@ class SchematicEditor : public QGraphicsView
 Q_OBJECT
 
 public:
+    enum class EditorState { Normal, Wiring, Probing };
     explicit SchematicEditor(Circuit* circuit, QWidget *parent = nullptr);
     void populateSceneFromCircuit();
     void updateCircuitWires();
     void updateBackendNodes();
-
-    // تابع جدید برای اتصال به پنجره اصلی
     void setMainWindow(MainWindow* window) { m_mainWindow = window; }
+    void setEditorMode(EditorState newState);
 
 public slots:
     void toggleWiringMode(bool enabled);
@@ -38,19 +38,22 @@ protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override; // <-- اعلان تابع اضافه شد
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
-    enum class WiringState { NotWiring, DrawingWire };
-    WiringState m_wiringState;
+
+    EditorState m_editorState;
     Circuit* m_circuit;
-    MainWindow* m_mainWindow = nullptr; // <-- اشاره‌گر به پنجره اصلی
+    MainWindow* m_mainWindow = nullptr;
     PolylineWireItem *m_currentWire = nullptr;
     QList<QGraphicsLineItem*> m_tempPreviewSegments;
     std::vector<std::set<TerminalItem*>> m_logicalNodes;
 
     TerminalItem* getTerminalAt(const QPoint& pos);
+    TerminalItem* getTerminalNear(const QPointF& scenePos);
+    int findNodeAt(const QPointF& scenePos);
     QPointF snapToGrid(const QPointF& pos);
     void registerLogicalConnection(TerminalItem* term1, TerminalItem* term2);
     void cancelWiring();

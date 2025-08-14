@@ -8,10 +8,6 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/memory.hpp>
-#include "cereal_registration.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -25,31 +21,6 @@ unique_ptr<Circuit> Circuit::clone() const {
     newCircuit->wires = this->wires;
     newCircuit->m_externalPorts = this->m_externalPorts;
     return newCircuit;
-}
-
-void Circuit::saveToFile(const std::string& filepath) {
-    std::ofstream os(filepath, std::ios::binary);
-    if (!os) {
-        throw std::runtime_error("Cannot open file for writing: " + filepath);
-    }
-    cereal::BinaryOutputArchive archive(os);
-    archive(CEREAL_NVP(components), CEREAL_NVP(wires), CEREAL_NVP(m_externalPorts));
-    std::cout << "Circuit saved successfully to " << filepath << std::endl;
-}
-
-void Circuit::loadFromFile(const std::string& filepath) {
-    std::ifstream is(filepath, std::ios::binary);
-    if (!is) {
-        throw std::runtime_error("Cannot open file for reading: " + filepath);
-    }
-    cereal::BinaryInputArchive archive(is);
-    clear();
-    archive(components, wires, m_externalPorts);
-    std::cout << "Circuit loaded successfully from " << filepath << std::endl;
-}
-
-const map<string, vector<double>>& Circuit::getSimulationResults() const {
-    return simulationResults;
 }
 
 void Circuit::runTransientAnalysis(double Tstop, double Tstep, const vector<PrintVariable>& printVars, double Tstart, double Tmaxstep) {
@@ -241,6 +212,61 @@ void Circuit::runACAnalysis(double startFreq, double stopFreq, int numPoints, co
         }
     }
     cout << "AC Sweep analysis finished." << endl;
+}
+
+void Circuit::runPhaseAnalysis(double baseFreq, double startPhase, double stopPhase, int numPoints, const vector<PrintVariable>& printVars) {
+    unique_ptr<Circuit> flatCircuit = this->clone();
+    flatCircuit->analyzeCircuit();
+
+    int matrix_size = flatCircuit->nodeCount + flatCircuit->currentVarCount;
+    if (matrix_size == 0) {
+        cout << "Circuit is empty. Cannot run analysis." << endl;
+        return;
+    }
+
+
+    ACVoltageSource* acSource = nullptr;
+    for (const auto& comp : flatCircuit->components) {
+        if (auto src = dynamic_cast<ACVoltageSource*>(comp.get())) {
+            acSource = src;
+            break;
+        }
+    }
+    if (!acSource) {
+        throw runtime_error("Phase analysis requires at least one AC Voltage Source in the circuit.");
+    }
+
+    this->simulationResults.clear();
+    this->simulationResults["Phase"];
+
+
+
+    cout << "--- Starting Phase Sweep Analysis ---" << endl;
+    double omega = 2 * M_PI * baseFreq;
+
+    for (int i = 0; i < numPoints; ++i) {
+        double phase = startPhase + i * (stopPhase - startPhase) / (numPoints - 1);
+
+
+        acSource->setProperties({{"Phase", phase}});
+
+        MatrixXcd A = MatrixXcd::Zero(matrix_size, matrix_size);
+        VectorXcd b = VectorXcd::Zero(matrix_size);
+
+        for (const auto& comp : flatCircuit->components) {
+            int final_current_idx = -1;
+            if (comp->addsCurrentVariable()) {
+                final_current_idx = flatCircuit->nodeCount + flatCircuit->currentComponentMap.at(comp->getName()) - 1;
+            }
+            comp->stampAC(A, b, final_current_idx, omega); // از همان stampAC استفاده می‌کنیم
+        }
+
+        VectorXcd x = A.colPivHouseholderQr().solve(b);
+
+        this->simulationResults["Phase"].push_back(phase);
+
+    }
+    cout << "Phase Sweep analysis finished." << endl;
 }
 
 void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars) {
