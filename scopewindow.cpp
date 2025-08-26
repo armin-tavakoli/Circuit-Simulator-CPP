@@ -56,15 +56,21 @@ void ScopeWindow::setupChart(const std::map<std::string, std::vector<double>>& r
     chart->setTitle("Simulation Results");
     chart->setAnimationOptions(QChart::SeriesAnimations);
 
-    if (results.count("Time")) m_xData = results.at("Time");
-    else if (results.count("Frequency")) m_xData = results.at("Frequency");
-    else if (results.count("Phase")) m_xData = results.at("Phase");
+    if (results.count("Time")) {
+        m_xData = results.at("Time");
+    } else if (results.count("Frequency")) {
+        m_xData = results.at("Frequency");
+    } else if (results.count("Phase")) {
+        m_xData = results.at("Phase");
+    } else if (results.count(xAxisTitle.toStdString())) {
+        m_xData = results.at(xAxisTitle.toStdString());
+    }
 
     if (m_xData.empty()) return;
 
     for (const auto& pair : results) {
         QString name = QString::fromStdString(pair.first);
-        if (name != "Time" && name != "Frequency" && name != "Phase") {
+        if (name != xAxisTitle) {
             m_yData[name] = pair.second; // کپی کردن داده‌های محور Y
             QLineSeries *series = new QLineSeries();
             series->setName(name);

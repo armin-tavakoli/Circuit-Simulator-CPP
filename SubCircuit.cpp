@@ -30,15 +30,20 @@ void SubCircuit::stampAC(MatrixXcd&, VectorXcd&, int, double) const {
     throw std::logic_error("SubCircuit::stampAC should not be called directly. Circuit should be flattened first.");
 }
 
+// --- تابع اصلاح شده و امن ---
 string SubCircuit::toNetlistString() const {
     std::string str = name;
     for (int node : nodes) {
         str += " " + std::to_string(node);
     }
+
+    // اگر مسیر فایل تعریف نشده بود، یک نام امن برگردان
     if (m_definitionFile.empty()) {
-        str += " EMPTY_DEF";
+        str += " EMPTY_SUBCIRCUIT_DEF";
         return str;
     }
+
+    // استفاده از QFileInfo برای استخراج امن نام فایل
     QString fullPath = QString::fromStdString(m_definitionFile);
     QFileInfo fileInfo(fullPath);
     std::string definitionName = fileInfo.baseName().toStdString();

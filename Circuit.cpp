@@ -269,7 +269,9 @@ void Circuit::runPhaseAnalysis(double baseFreq, double startPhase, double stopPh
     cout << "Phase Sweep analysis finished." << endl;
 }
 
-void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars) {
+
+void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double endVal, double increment, const vector<PrintVariable>& printVars)
+{
     unique_ptr<Circuit> flatCircuit = this->clone();
     flatCircuit->analyzeCircuit();
 
@@ -278,56 +280,41 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
         throw runtime_error("Sweep source '" + sweepSourceName + "' not found.");
     }
 
-    string propToSweep;
-    if (dynamic_cast<VoltageSource*>(sweepSource)) {
-        propToSweep = "Voltage";
-    } else if (dynamic_cast<CurrentSource*>(sweepSource)) {
-        propToSweep = "Current";
-    } else {
-        throw runtime_error("DC Sweep can only be performed on a DC Voltage or Current source.");
+
+    this->simulationResults.clear();
+
+    this->simulationResults[sweepSourceName];
+
+
+    for (int i = 0; i < flatCircuit->nodeCount; ++i) {
+        this->simulationResults["V(" + to_string(i + 1) + ")"];
+    }
+    for (const auto& pair : flatCircuit->currentComponentMap) {
+        this->simulationResults["I(" + pair.first + ")"];
     }
 
-    const double h_dc = 1e12;
 
+    string propToSweep;
+    if (dynamic_cast<VoltageSource*>(sweepSource)) propToSweep = "Voltage";
+    else if (dynamic_cast<CurrentSource*>(sweepSource)) propToSweep = "Current";
+    else throw runtime_error("DC Sweep can only be performed on a DC Voltage or Current source.");
+
+    const double h_dc = 1e12;
     int matrix_size = flatCircuit->nodeCount + flatCircuit->currentVarCount;
     if (matrix_size == 0) {
         cout << "Circuit is empty. Cannot run analysis." << endl;
         return;
     }
 
-    vector<int> printIndices;
-    vector<string> printHeaders;
-    printHeaders.push_back(sweepSourceName);
-
-    for (const auto& var : printVars) {
-        if (toupper(var.type) == 'V') {
-            int nodeNum = stoi(var.id);
-            if (nodeNum > 0 && nodeNum <= flatCircuit->nodeCount) {
-                printIndices.push_back(nodeNum - 1);
-                printHeaders.push_back("V(" + var.id + ")");
-            }
-        } else if (toupper(var.type) == 'I') {
-            if (flatCircuit->currentComponentMap.count(var.id)) {
-                int m_idx = flatCircuit->currentComponentMap.at(var.id);
-                printIndices.push_back(flatCircuit->nodeCount + m_idx - 1);
-                printHeaders.push_back("I(" + var.id + ")");
-            }
-        }
-    }
-
     cout << "--- Starting DC Sweep Analysis ---" << endl;
-    for(const auto& header : printHeaders) {
-        cout << left << setw(15) << header;
-    }
-    cout << endl;
 
     for (double sweepVal = startVal; sweepVal <= endVal; sweepVal += increment) {
         sweepSource->setProperties({{propToSweep, sweepVal}});
 
         VectorXd x = VectorXd::Zero(matrix_size);
+
         const int MAX_NR_ITER = 100;
         const double NR_TOLERANCE = 1e-6;
-
         for (int i = 0; i < MAX_NR_ITER; ++i) {
             MatrixXd A = MatrixXd::Zero(matrix_size, matrix_size);
             VectorXd b = VectorXd::Zero(matrix_size);
@@ -349,11 +336,16 @@ void Circuit::runDCSweep(const string& sweepSourceName, double startVal, double 
             }
         }
 
-        cout << left << setw(15) << fixed << setprecision(6) << sweepVal;
-        for (int idx : printIndices) {
-            cout << setw(15) << fixed << setprecision(6) << x(idx);
+        this->simulationResults[sweepSourceName].push_back(sweepVal);
+        for (int i = 0; i < flatCircuit->nodeCount; ++i) {
+            string varName = "V(" + to_string(i + 1) + ")";
+            this->simulationResults[varName].push_back(x(i));
         }
-        cout << endl;
+        for (const auto& pair : flatCircuit->currentComponentMap) {
+            string varName = "I(" + pair.first + ")";
+            this->simulationResults[varName].push_back(x(flatCircuit->nodeCount + pair.second - 1));
+        }
+
     }
     cout << "DC Sweep analysis finished." << endl;
 }

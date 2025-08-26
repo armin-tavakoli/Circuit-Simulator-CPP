@@ -590,9 +590,13 @@ void MainWindow::onRunSimulation() {
             } else if (tabIndex == 2) {
                 circuit->runPhaseAnalysis(simDialog.getBaseFreq(), simDialog.getStartPhase(), simDialog.getStopPhase(), simDialog.getNumPointsPhase());
                 xAxisTitle = "Phase (deg)";
+            }else if (tabIndex == 3) {
+                std::string sourceName = simDialog.getDcSourceName();
+                circuit->runDCSweep(sourceName, simDialog.getDcStartValue(), simDialog.getDcStopValue(), simDialog.getDcIncrement(), {});
+                xAxisTitle = QString::fromStdString(sourceName);
             }
 
-            // ------------ ایستگاه بازرسی ۲ ------------
+
             qDebug() << "[DEBUG] Analysis finished. Getting results...";
 
             const auto& allResults = circuit->getSimulationResults();
@@ -601,7 +605,7 @@ void MainWindow::onRunSimulation() {
                 return;
             }
 
-            // ------------ ایستگاه بازرسی ۳ ------------
+
             qDebug() << "[DEBUG] Results are valid. Creating PlotSelectionDialog...";
 
             QStringList availablePlots;
@@ -613,11 +617,11 @@ void MainWindow::onRunSimulation() {
 
             PlotSelectionDialog plotDialog(availablePlots, this);
 
-            // ------------ ایستگاه بازرسی ۴ ------------
+
             qDebug() << "[DEBUG] PlotSelectionDialog created. Executing...";
 
             if (plotDialog.exec() == QDialog::Accepted) {
-                // ------------ ایستگاه بازرسی ۵ ------------
+
                 qDebug() << "[DEBUG] PlotSelectionDialog accepted. Processing selected plots...";
 
                 QStringList selectedPlotNames = plotDialog.getSelectedPlots();
@@ -634,17 +638,17 @@ void MainWindow::onRunSimulation() {
                     selectedResults[name.toStdString()] = allResults.at(name.toStdString());
                 }
 
-                // ------------ ایستگاه بازرسی ۶ ------------
+
                 qDebug() << "[DEBUG] Creating ScopeWindow...";
 
                 m_scopeWindow = new ScopeWindow(selectedResults, xAxisTitle, this);
 
-                // ------------ ایستگاه بازرسی ۷ ------------
+
                 qDebug() << "[DEBUG] Showing ScopeWindow...";
 
                 m_scopeWindow->show();
 
-                // ------------ ایستگاه بازرسی ۸ ------------
+
                 qDebug() << "[DEBUG] ScopeWindow is shown.";
             } else {
                 qDebug() << "[DEBUG] PlotSelectionDialog was cancelled or closed.";

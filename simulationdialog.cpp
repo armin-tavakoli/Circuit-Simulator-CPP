@@ -19,6 +19,7 @@ SimulationDialog::SimulationDialog(QWidget *parent)
     createTransientTab();
     createAcSweepTab();
     createPhaseSweepTab();
+    createDcSweepTab();
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -85,6 +86,25 @@ void SimulationDialog::createPhaseSweepTab()
     tabWidget->addTab(phaseTab, tr("Phase Sweep"));
 }
 
+void SimulationDialog::createDcSweepTab()
+{
+    QWidget *dcTab = new QWidget;
+    QFormLayout *formLayout = new QFormLayout;
+
+    dcSourceEdit = new QLineEdit("Vs");
+    startValueEdit = new QLineEdit("0");
+    stopValueEdit = new QLineEdit("10");
+    incrementEdit = new QLineEdit("0.5");
+
+    formLayout->addRow(new QLabel(tr("Source Name:")), dcSourceEdit);
+    formLayout->addRow(new QLabel(tr("Start Value:")), startValueEdit);
+    formLayout->addRow(new QLabel(tr("Stop Value:")), stopValueEdit);
+    formLayout->addRow(new QLabel(tr("Increment:")), incrementEdit);
+
+    dcTab->setLayout(formLayout);
+    tabWidget->addTab(dcTab, tr("DC Sweep"));
+}
+
 int SimulationDialog::getCurrentTabIndex() const { return tabWidget->currentIndex(); }
 
 double SimulationDialog::getStopTime() const { return parseValue(stopTimeEdit->text().toStdString()); }
@@ -100,3 +120,8 @@ double SimulationDialog::getBaseFreq() const { return parseValue(baseFreqEdit->t
 double SimulationDialog::getStartPhase() const { return parseValue(startPhaseEdit->text().toStdString()); }
 double SimulationDialog::getStopPhase() const { return parseValue(stopPhaseEdit->text().toStdString()); }
 int SimulationDialog::getNumPointsPhase() const { return numPointsPhaseEdit->text().toInt(); }
+
+std::string SimulationDialog::getDcSourceName() const { return dcSourceEdit->text().toStdString(); }
+double SimulationDialog::getDcStartValue() const { return parseValue(startValueEdit->text().toStdString()); }
+double SimulationDialog::getDcStopValue() const { return parseValue(stopValueEdit->text().toStdString()); }
+double SimulationDialog::getDcIncrement() const { return parseValue(incrementEdit->text().toStdString()); }

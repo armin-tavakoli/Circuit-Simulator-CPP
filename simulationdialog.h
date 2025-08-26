@@ -18,27 +18,33 @@ public:
 
     int getCurrentTabIndex() const;
 
-    // Transient getters
+
     double getStopTime() const;
     double getStartTime() const;
     double getTimeStep() const;
 
-    // AC Sweep getters
+
     double getStartFreq() const;
     double getStopFreq() const;
     int getNumPoints() const;
     std::string getSweepType() const;
-    // Phase Sweep getters
+
     double getBaseFreq() const;
     double getStartPhase() const;
     double getStopPhase() const;
     int getNumPointsPhase() const;
+
+    std::string getDcSourceName() const;
+    double getDcStartValue() const;
+    double getDcStopValue() const;
+    double getDcIncrement() const;
 
 
 private:
     void createTransientTab();
     void createAcSweepTab();
     void createPhaseSweepTab();
+    void createDcSweepTab();
 
     QTabWidget *tabWidget;
     QDialogButtonBox *buttonBox;
@@ -58,6 +64,11 @@ private:
     QLineEdit *startPhaseEdit;
     QLineEdit *stopPhaseEdit;
     QLineEdit *numPointsPhaseEdit;
+
+    QLineEdit *dcSourceEdit;
+    QLineEdit *startValueEdit;
+    QLineEdit *stopValueEdit;
+    QLineEdit *incrementEdit;
 };
 
 #endif // SIMULATIONDIALOG_H
